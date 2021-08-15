@@ -1,0 +1,29 @@
+html, body {
+  padding: 0;
+  margin: 0;
+}
+
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+#wrapper {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+#habits-tracker {
+  max-width: 740px;
+  position: absolute;
+  top: 3em;
+  right: 0;
+  padding-right: .5em;
+  background: #222;
+  color: #fffd;
+}
+#gear { padding: 0;}

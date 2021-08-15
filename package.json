@@ -1,0 +1,21 @@
+{
+  "name": "logseq-habit-tracker",
+  "version": "0.0.1",
+  "main": "dist/index.html",
+  "author": "c6p",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@logseq/libs": "^0.0.1-alpha.17",
+    "vue": "^3.0.4"
+  },
+  "devDependencies": {
+    "@vue/compiler-sfc": "^3.0.4",
+    "vite": "^1.0.0-rc.13"
+  },
+  "logseq": {
+    "id": "c6p_logseq-habit-tracker"
+  }
+}
