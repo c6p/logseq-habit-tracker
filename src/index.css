@@ -32,5 +32,10 @@ th { font-size: 50%; padding: .5em 0; }
 .success { background: #060; }
 .failure { background: #600; }
 .period { cursor: pointer; color: #999; }
-.period input { width: 5em; }
+.period input {
+  width: 5em;
+  background: #333;
+  color: #fffd;
+  text-align: center;
+}
 #gear { position: absolute; padding: 0; }
