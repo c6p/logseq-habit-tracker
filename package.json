@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@logseq/libs": "^0.0.1-alpha.17",
+    "dayjs": "^1.10.6",
     "vue": "^3.0.4"
   },
   "devDependencies": {

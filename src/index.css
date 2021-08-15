@@ -8,6 +8,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
+  user-select: none;
 }
 
 #wrapper {
@@ -17,7 +18,7 @@ html, body {
   right: 0;
   bottom: 0;
 }
-#habits-tracker {
+#habit-tracker {
   max-width: 740px;
   position: absolute;
   top: 3em;
@@ -26,4 +27,10 @@ html, body {
   background: #222;
   color: #fffd;
 }
-#gear { padding: 0;}
+th { font-size: 50%; padding: .5em 0; }
+.habit { cursor: pointer; font-size: .8em; width: 1.2em; text-align: center; }
+.success { background: #060; }
+.failure { background: #600; }
+.period { cursor: pointer; color: #999; }
+.period input { width: 5em; }
+#gear { position: absolute; padding: 0; }
