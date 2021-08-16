@@ -103,13 +103,15 @@ export default {
       const s = logseq.settings;
       for (const h of habits) {
         const [title, times] = h[0].content.split('\n')[0].split(' - ').map(x => x.trim());
-        const count = times.split(',').length;
+        if (!title)
+          continue
+        const count = typeof times !== 'undefined' ? times.split(',').length : 1;
         const t = s[title];
         H[title] = H[title] || {
           title,
           track: Array(end-start).fill(0),
           period: t && t.period ? this.getPeriod(t.period) : null,
-          periodText: t.period,
+          periodText: t ? t.period : "",
         };
         H[title].track[h[0].page['journal-day']-start-1] = count;
       } 
