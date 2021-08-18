@@ -38,4 +38,4 @@ th { font-size: 50%; padding: .5em 0; }
   color: #fffd;
   text-align: center;
 }
-#gear { position: absolute; padding: 0; }
+#gear { position: absolute; left: -2em; padding: 0; }

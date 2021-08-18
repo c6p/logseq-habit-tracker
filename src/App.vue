@@ -1,24 +1,21 @@
 <template>
   <div id="wrapper" @click="onClickOutside">
     <div id="habit-tracker" v-if="visible">
-      <!--<Settings id="settings" v-show="settings" @hideSettings="settings=false"/>-->
-      <div v-show="!settings">
-        <!--<button id="gear" @click="settings=true">⚙️</button>-->
-        <table>
-          <tr><th>Frequency / Period</th><th>Habits</th><th v-for="d in dates" :key="d">{{ d }}</th></tr>
-          <tr v-for="h in habits" :key="h">
-            <td class="period"><input type="text" :value="h.periodText" @change="(e)=>setPeriod(h,e)"/></td>
-            <td>{{ h.title }}</td>
-            <td v-for="(v,i) in h.track" :key="v" :class="['habit', 'result' in h ? h.result[i] : '']" @click="openJournal(i)">{{ v > 0 ? v : "." }}</td>
-          </tr>
-        </table>  
-      </div>
+      <button id="gear" @click="settings=!settings">⚙️</button>
+      <label v-show="settings">Block content: <input type="text" :value="habitText" @change="setHabitText" /></label>
+      <table>
+        <tr><th>Frequency / Period</th><th>Habits</th><th v-for="d in dates" :key="d">{{ d }}</th></tr>
+        <tr v-for="h in habits" :key="h">
+          <td class="period"><input type="text" :value="h.periodText" @change="(e)=>setPeriod(h,e)"/></td>
+          <td>{{ h.title }}</td>
+          <td v-for="(v,i) in h.track" :key="v" :class="['habit', 'result' in h ? h.result[i] : '']" @click="openJournal(i)">{{ v > 0 ? v : "." }}</td>
+        </tr>
+      </table>  
     </div>
   </div>  
 </template>
 
 <script>
-//import Settings from "./Settings.vue"
 import dayjs from 'dayjs'
 
 function toInt(fromDayjs) {
@@ -40,11 +37,11 @@ export default {
     return {
       visible: false,
       settings: false,
+      habitText: "Habits",
       habits: [],
       dayRange: 14,
       start: 0,
-      anchor: "Habits",
-      dates: []
+      dates: [],
     }
   },
   mounted () {
@@ -71,9 +68,11 @@ export default {
         logseq.hideMainUI();
       } catch { }
     },
+    async setHabitText(e) {
+      await logseq.updateSettings({"habitText": e.target.value})
+    },
     async setPeriod(h,e) {
       await logseq.updateSettings({[h.title]: {period: e.target.value}})
-      this.update()
     },
     getPeriod(p) {
       const re = /(?<times>\d+)\s*\/\s*(?<multi>\d+)?(?<timeframe>[dwmy])/;
@@ -87,11 +86,14 @@ export default {
       return `${p.times} / ${p.multi > 1 ? p.multi : ''}${p.timeframe}`;
     },
     async getHabits(start, end) {
+      const s = logseq.settings;
       const habits = await logseq.DB.datascriptQuery(`
         [:find (pull ?b [:block/content {:block/page [:block/journal-day]}])
          :where
          [?b :block/parent ?p]
-         [?p :block/anchor "${this.anchor}"]
+         [?p :block/content ?c]
+         [(re-pattern "${this.habitText}\\n?") ?re]
+         [(re-matches ?re ?c)]
          [?p :block/page ?page]
          [?page :block/journal?]
          [?page :block/journal-day ?d]
@@ -100,7 +102,6 @@ export default {
         ]
       `);
       let H = {};
-      const s = logseq.settings;
       for (const h of habits) {
         const [title, times] = h[0].content.split('\n')[0].split(' - ').map(x => x.trim());
         if (!title)
@@ -118,6 +119,10 @@ export default {
       return H;
     },
     async update () {
+      const s = logseq.settings;
+      this.habitText = s.habitText;
+      if (!this.habitText)
+        return;
       const startDay = dayjs().subtract(this.dayRange, 'day');
       this.dates = [...Array(this.dayRange)].map((_,i) => startDay.add(i+1,'d').format('D.M'));
 
