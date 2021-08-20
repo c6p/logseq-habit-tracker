@@ -16,10 +16,21 @@ function main() {
     zIndex: 11,
   })
 
+  const key = logseq.baseInfo.id
+
+  logseq.provideStyle(`
+    div[data-injected-ui=show-habits-${key}] {
+      display: flex;
+      align-items: center;
+      padding: 6px;
+      font-size: 20px;
+    }
+  `)
+
   logseq.provideUI({
     key: 'show-habits',
-    path: '#head',
-    template: `<a data-on-click="show" title="Habits" class="opacity-60 hover:opacity-100">🎫</a>`,
+    path: '#search',
+    template: `<a data-on-click="show" title="Habits" class="opacity-60 hover:opacity-100">🗹</a>`,
   })
 
   createApp(App).mount('#app');
