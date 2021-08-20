@@ -1,6 +1,6 @@
 <template>
-  <div id="wrapper" @click="onClickOutside">
-    <div id="habit-tracker" v-if="visible">
+  <div id="wrapper" @click="onClickOutside" :style="colors">
+    <div id="habit-tracker" v-if="visible" ref="div" :style="{left: left+'px'}">
       <button id="gear" @click="gear=!gear">⚙️</button>
       <div id="settings" v-show="gear">
         <label>Block content: <input type="text" :value="habitText" @change="setHabitText" /></label>
@@ -45,9 +45,15 @@ export default {
       dayRange: 14,
       start: 0,
       dates: [],
+      colors: {},
+      left: 0,
     }
   },
-  mounted () {
+  async mounted () {
+    const appUserConfig = await logseq.App.getUserConfigs();
+    console.warn(appUserConfig);
+    this.setTheme({mode: appUserConfig.preferredThemeMode});
+    logseq.App.onThemeModeChanged(this.setTheme);
     logseq.on('settings:changed', (_) => { this.update() })
     logseq.on('ui:visible:changed', ({ visible }) => {
       if (visible) {
@@ -58,8 +64,28 @@ export default {
   },
   methods: {
     hideMainUI() {
-      this.settings = false;
+      this.gear = false;
       logseq.hideMainUI()
+    },
+    setTheme({mode}) {
+      // read theme colors
+      const s = getComputedStyle(window.parent.document.documentElement);
+      this.colors = {
+        '--background': s.getPropertyValue('--ls-primary-background-color'),
+        '--color': s.getPropertyValue('--ls-primary-text-color'),
+        '--input': s.getPropertyValue('--ls-secondary-background-color'),
+        '--shadow': mode === 'dark' ? 'black' : 'gray',
+        '--red': mode === 'dark' ? '#500' : '#ffcccb',
+        '--green': mode === 'dark' ? '#050' : '#d7ffd9',
+      } 
+    },
+    setLeftPosition() {
+      const id = logseq.baseInfo.id;
+      const el = top.document.querySelector(`div[data-injected-ui=show-habits-${id}]`);
+      const {width} = this.$refs.div.getBoundingClientRect();
+      const {left} = el.getBoundingClientRect();
+      console.warn(window.innerWidth, width, left)
+      this.left = Math.min(window.innerWidth - width, left - width/2);
     },
     onClickOutside ({ target }) {
       const inner = target.closest('#habit-tracker')
@@ -165,6 +191,10 @@ export default {
       
       this.start = start;
       this.habits = Object.values(habits);
+      
+      this.$nextTick(function() {
+        this.setLeftPosition();
+      })
     }
   },
 }
