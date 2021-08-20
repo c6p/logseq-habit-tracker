@@ -1,14 +1,17 @@
 <template>
   <div id="wrapper" @click="onClickOutside">
     <div id="habit-tracker" v-if="visible">
-      <button id="gear" @click="settings=!settings">⚙️</button>
-      <label v-show="settings">Block content: <input type="text" :value="habitText" @change="setHabitText" /></label>
+      <button id="gear" @click="gear=!gear">⚙️</button>
+      <div id="settings" v-show="gear">
+        <label>Block content: <input type="text" :value="habitText" @change="setHabitText" /></label>
+      </div>
       <table>
-        <tr><th>Frequency / Period</th><th>Habits</th><th v-for="d in dates" :key="d">{{ d }}</th></tr>
-        <tr v-for="h in habits" :key="h">
+        <tr><th v-show="gear">Hidden</th><th>Frequency / Period</th><th>Habits</th><th v-for="d in dates" :key="d">{{ d }}</th></tr>
+        <tr v-show="gear || !h.hidden" v-for="h in habits" :key="h">
+          <td v-show="gear"><input type="checkbox" :checked="h.hidden" @change="(e)=>setHidden(h,e)"/></td>
           <td class="period"><input type="text" :value="h.periodText" @change="(e)=>setPeriod(h,e)"/></td>
           <td>{{ h.title }}</td>
-          <td v-for="(v,i) in h.track" :key="v" :class="['habit', 'result' in h ? h.result[i] : '']" @click="openJournal(i)">{{ v > 0 ? v : "." }}</td>
+          <td v-for="(v,i) in h.track" :key="v" :class="['habit', 'result' in h ? h.result[i] : '']" @click="openJournal(i)">{{ v > 0 ? v : "" }}</td>
         </tr>
       </table>  
     </div>
@@ -36,7 +39,7 @@ export default {
   data () {
     return {
       visible: false,
-      settings: false,
+      gear: false,
       habitText: "Habits",
       habits: [],
       dayRange: 14,
@@ -45,9 +48,12 @@ export default {
     }
   },
   mounted () {
-    logseq.on('settings:changed', (s) => { this.update() })
+    logseq.on('settings:changed', (_) => { this.update() })
     logseq.on('ui:visible:changed', ({ visible }) => {
-      visible && (this.visible = visible) && this.update()
+      if (visible) {
+        this.visible = visible;
+        this.update();
+      }
     })
   },
   methods: {
@@ -57,7 +63,10 @@ export default {
     },
     onClickOutside ({ target }) {
       const inner = target.closest('#habit-tracker')
-      !inner && this.hideMainUI()
+      if (!inner) {
+        this.hideMainUI();
+        this.gear = false;
+      }
     },
     async openJournal(i) {
       const day = await logseq.DB.datascriptQuery(`
@@ -70,6 +79,9 @@ export default {
     },
     async setHabitText(e) {
       await logseq.updateSettings({"habitText": e.target.value})
+    },
+    async setHidden(h,e) {
+      await logseq.updateSettings({[h.title]: {hidden: e.target.checked}})
     },
     async setPeriod(h,e) {
       await logseq.updateSettings({[h.title]: {period: e.target.value}})
@@ -111,8 +123,9 @@ export default {
         H[title] = H[title] || {
           title,
           track: Array(end-start).fill(0),
-          period: t && t.period ? this.getPeriod(t.period) : null,
+          period: t?.period ? this.getPeriod(t.period) : null,
           periodText: t ? t.period : "",
+          hidden: t?.hidden,
         };
         H[title].track[h[0].page['journal-day']-start-1] = count;
       } 
