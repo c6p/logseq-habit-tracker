@@ -51,7 +51,6 @@ export default {
   },
   async mounted () {
     const appUserConfig = await logseq.App.getUserConfigs();
-    console.warn(appUserConfig);
     this.setTheme({mode: appUserConfig.preferredThemeMode});
     logseq.App.onThemeModeChanged(this.setTheme);
     logseq.on('settings:changed', (_) => { this.update() })
@@ -84,7 +83,6 @@ export default {
       const el = top.document.querySelector(`div[data-injected-ui=show-habits-${id}]`);
       const {width} = this.$refs.div.getBoundingClientRect();
       const {left} = el.getBoundingClientRect();
-      console.warn(window.innerWidth, width, left)
       this.left = Math.min(window.innerWidth - width, left - width/2);
     },
     onClickOutside ({ target }) {
