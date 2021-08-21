@@ -22,14 +22,12 @@ function main() {
     div[data-injected-ui=show-habits-${key}] {
       display: flex;
       align-items: center;
-      padding: 6px;
       font-size: 20px;
     }
   `)
 
-  logseq.provideUI({
+  logseq.App.registerUIItem('toolbar', {
     key: 'show-habits',
-    path: '#search',
     template: `<a data-on-click="show" title="Habits" class="opacity-60 hover:opacity-100">🗹</a>`,
   })
 
