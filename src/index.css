@@ -25,6 +25,7 @@ html, body {
   box-shadow: 1px 1px 8px var(--shadow);
   max-width: 100%;
 }
+a { color: var(--color); }
 #settings { display: flex; justify-content: space-around; margin-bottom: .5em; }
 input { background: var(--input); color: var(--color); width: 5em; text-align: center; }
 th { font-size: 70%; padding: .5em 0; }
