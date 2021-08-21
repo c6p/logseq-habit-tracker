@@ -17,21 +17,24 @@ html, body {
   bottom: 0;
 }
 #habit-tracker {
-  max-width: 740px;
   position: absolute;
   top: 3em;
   padding-right: .5em;
   background: var(--background);
   color: var(--color);
   box-shadow: 1px 1px 8px var(--shadow);
+  max-width: 100%;
 }
-input { background: var(--input); color: var(--color); }
-th { font-size: 50%; padding: .5em 0; }
-.habit { cursor: pointer; font-size: .8em; width: 1.2em; text-align: center; }
+#settings { display: flex; justify-content: space-around; margin-bottom: .5em; }
+input { background: var(--input); color: var(--color); width: 5em; text-align: center; }
+th { font-size: 70%; padding: .5em 0; }
+.hidden, .hidden input { width: 1em; text-align: center; }
+.habit { width: 1em; white-space: nowrap; }
+.weekend { background: var(--input); }
+.track { cursor: pointer; max-width: 5em; }
+th.track { white-space: pre-line; }
+td.track { font-size: .8em; font-weight: bold; text-align: center; }
 .success { background: var(--green); }
 .failure { background: var(--red); }
-.period input {
-  width: 5em;
-  text-align: center;
-}
+.period, .period input { width: 5em; text-align: center; }
 #gear { position: absolute; left: -2em; padding: 0; }

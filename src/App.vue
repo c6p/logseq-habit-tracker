@@ -3,15 +3,26 @@
     <div id="habit-tracker" v-if="visible" ref="div" :style="{left: left+'px'}">
       <button id="gear" @click="gear=!gear">⚙️</button>
       <div id="settings" v-show="gear">
-        <label>Block content: <input type="text" :value="habitText" @change="setHabitText" /></label>
+        <label>Block content: <input type="text" :placeholder="defaults.habitText" :value="habitText" @change="(e)=>set('habitText', e.target.value)" /></label>
+        <label>Date format: <input type="text" :placeholder="defaults.dateFormat" :value="dateFormat" @change="(e)=>set('dateFormat', e.target.value)" /></label>
+        <label>Date width: <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth" @change="(e)=>set('dateWidth', e.target.value)" /></label>
       </div>
       <table>
-        <tr><th v-show="gear">Hidden</th><th>Frequency / Period</th><th>Habits</th><th v-for="d in dates" :key="d">{{ d }}</th></tr>
+        <tr>
+          <th v-show="gear">Hidden</th>
+          <th class="period">Frequency <br>/ Period</th>
+          <th>Habits</th>
+          <th v-for="(d,i) in dates" :key="d" :class="['track', ['0','6'].includes(d.format('d')) ? 'weekend' : '']" @click="openJournal(i)">
+            {{ d.format((dateFormat || defaults.dateFormat).replace('\\n', '\n')) }}
+          </th>
+        </tr>
         <tr v-show="gear || !h.hidden" v-for="h in habits" :key="h">
-          <td v-show="gear"><input type="checkbox" :checked="h.hidden" @change="(e)=>setHidden(h,e)"/></td>
-          <td class="period"><input type="text" :value="h.periodText" @change="(e)=>setPeriod(h,e)"/></td>
-          <td>{{ h.title }}</td>
-          <td v-for="(v,i) in h.track" :key="v" :class="['habit', 'result' in h ? h.result[i] : '']" @click="openJournal(i)">{{ v > 0 ? v : "" }}</td>
+          <td v-show="gear" class="hidden"><input type="checkbox" :checked="h.hidden" @change="(e)=>setHabitProp(h, 'hidden', e.target.checked)"/></td>
+          <td class="period"><input type="text" :value="h.periodText" @change="(e)=>setHabitProp(h, 'period', e.target.value)"/></td>
+          <td class="habit">{{ h.title }}</td>
+          <td v-for="(v,i) in h.track" :key="v" :style="{width: dateWidth || defaults.dateWidth}" :class="['track', 'result' in h ? h.result[i] : '']" @click="openJournal(i)">
+            {{ v > 0 ? v : "" }}
+          </td>
         </tr>
       </table>  
     </div>
@@ -40,13 +51,20 @@ export default {
     return {
       visible: false,
       gear: false,
-      habitText: "Habits",
-      habits: [],
-      dayRange: 14,
-      start: 0,
-      dates: [],
       colors: {},
       left: 0,
+      defaults:  {
+        habitText: "Habits",
+        dateFormat: String.raw`D.M\ndd`,
+        dateWidth: "2em",
+      },
+      habitText: "",
+      dateFormat: "",
+      dateWidth: "",
+      habits: [],
+      dates: [],
+      dayRange: 14,
+      start: 0,
     }
   },
   async mounted () {
@@ -101,14 +119,11 @@ export default {
         logseq.hideMainUI();
       } catch { }
     },
-    async setHabitText(e) {
-      await logseq.updateSettings({"habitText": e.target.value})
+    async set(key,val) {
+      await logseq.updateSettings({[key]: val})
     },
-    async setHidden(h,e) {
-      await logseq.updateSettings({[h.title]: {hidden: e.target.checked}})
-    },
-    async setPeriod(h,e) {
-      await logseq.updateSettings({[h.title]: {period: e.target.value}})
+    async setHabitProp(h,prop,val) {
+      await logseq.updateSettings({[h.title]: {[prop]: val}})
     },
     getPeriod(p) {
       const re = /(?<times>\d+)\s*\/\s*(?<multi>\d+)?(?<timeframe>[dwmy])/;
@@ -128,7 +143,7 @@ export default {
          :where
          [?b :block/parent ?p]
          [?p :block/content ?c]
-         [(re-pattern "${this.habitText}\\n?") ?re]
+         [(re-pattern "${this.habitText || this.defaults.habitText}\\n?") ?re]
          [(re-matches ?re ?c)]
          [?p :block/page ?page]
          [?page :block/journal?]
@@ -158,10 +173,10 @@ export default {
     async update () {
       const s = logseq.settings;
       this.habitText = s.habitText;
-      if (!this.habitText)
-        return;
+      this.dateFormat = s.dateFormat;
+      this.dateWidth = s.dateWidth;
       const startDay = dayjs().subtract(this.dayRange, 'day');
-      this.dates = [...Array(this.dayRange)].map((_,i) => startDay.add(i+1,'d').format('D.M'));
+      this.dates = [...Array(this.dayRange)].map((_,i) => startDay.add(i+1,'d'));
 
       const end = toInt(dayjs())
       const start = toInt(startDay);
