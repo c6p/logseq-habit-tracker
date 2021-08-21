@@ -32,7 +32,7 @@ th { font-size: 70%; padding: .5em 0; }
 .hidden, .hidden input { width: 1em; text-align: center; }
 .habit { width: 1em; white-space: nowrap; }
 .weekend { background: var(--input); }
-.track { cursor: pointer; max-width: 5em; }
+.track { cursor: pointer; }
 th.track { white-space: pre-line; }
 td.track { font-size: .8em; font-weight: bold; text-align: center; }
 .success { background: var(--green); }

@@ -1,14 +1,14 @@
 <template>
   <div id="wrapper" @click="onClickOutside" :style="colors">
     <div id="habit-tracker" v-if="visible" ref="div" :style="{left: left+'px'}">
-      <button id="gear" @click="gear=!gear">⚙️</button>
+      <button id="gear" @click="toggleSettings">⚙️</button>
       <div id="settings" v-show="gear">
         <label>Block content: <input type="text" :placeholder="defaults.habitText" :value="habitText" @change="(e)=>set('habitText', e.target.value)" /></label>
         <label>Date <a href="https://day.js.org/docs/en/display/format" target="_blank" title="'\n' adds a new line. View syntax ->">format</a>:
           <input type="text" :placeholder="defaults.dateFormat" :value="dateFormat" @change="(e)=>set('dateFormat', e.target.value)" />
         </label>
         <label>Date <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/width#syntax" target="_blank" title="CSS width property. View syntax ->">width</a>:
-          <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth" @change="(e)=>set('dateWidth', e.target.value)" />
+          <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth" @change="(e)=>{left=0; set('dateWidth', e.target.value)}" />
         </label>
       </div>
       <table>
@@ -16,15 +16,15 @@
           <th v-show="gear">Hidden</th>
           <th class="period">Frequency <br>/ Period</th>
           <th>Habits</th>
-          <th v-for="(d,i) in dates" :key="d" :class="['track', ['0','6'].includes(d.format('d')) ? 'weekend' : '']" @click="openJournal(i)">
-            {{ d.format((dateFormat || defaults.dateFormat).replace('\\n', '\n')) }}
+          <th v-for="(d,i) in dates" :key="d" :style="{width: dateWidth || defaults.dateWidth}" :class="['track', ['0','6'].includes(d.format('d')) ? 'weekend' : '']" @click="openJournal(i)">
+            {{ d.format((dateFormat || defaults.dateFormat).replaceAll('\\n', '\n')) }}
           </th>
         </tr>
         <tr v-show="gear || !h.hidden" v-for="h in habits" :key="h">
           <td v-show="gear" class="hidden"><input type="checkbox" :checked="h.hidden" @change="(e)=>setHabitProp(h, 'hidden', e.target.checked)"/></td>
           <td class="period"><input type="text" :value="h.periodText" @change="(e)=>setHabitProp(h, 'period', e.target.value)"/></td>
           <td class="habit">{{ h.title }}</td>
-          <td v-for="(v,i) in h.track" :key="v" :style="{width: dateWidth || defaults.dateWidth}" :class="['track', 'result' in h ? h.result[i] : '']" @click="openJournal(i)">
+          <td v-for="(v,i) in h.track" :key="v" :class="['track', 'result' in h ? h.result[i] : '']" @click="openJournal(i)">
             {{ v > 0 ? v : "" }}
           </td>
         </tr>
@@ -35,6 +35,8 @@
 
 <script>
 import dayjs from 'dayjs'
+import advancedFormat from 'dayjs/plugin/advancedFormat'
+dayjs.extend(advancedFormat)
 
 function toInt(fromDayjs) {
   return parseInt(fromDayjs.format('YYYYMMDD'));
@@ -99,6 +101,11 @@ export default {
         '--red': mode === 'dark' ? '#500' : '#ffcccb',
         '--green': mode === 'dark' ? '#050' : '#d7ffd9',
       } 
+    },
+    toggleSettings() {
+      this.left = 0;
+      this.gear = !this.gear;
+      this.$nextTick(this.setLeftPosition)
     },
     setLeftPosition() {
       const id = logseq.baseInfo.id;
@@ -209,9 +216,7 @@ export default {
       this.start = start;
       this.habits = Object.values(habits);
       
-      this.$nextTick(function() {
-        this.setLeftPosition();
-      })
+      this.$nextTick(this.setLeftPosition)
     }
   },
 }
