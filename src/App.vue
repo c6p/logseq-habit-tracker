@@ -36,9 +36,10 @@
 <script>
 import dayjs from 'dayjs'
 import advancedFormat from 'dayjs/plugin/advancedFormat'
-dayjs.extend(advancedFormat)
+import minMax from 'dayjs/plugin/minMax'
+dayjs.extend(advancedFormat).extend(minMax);
 
-function toInt(fromDayjs) {
+function toYMD(fromDayjs) {
   return parseInt(fromDayjs.format('YYYYMMDD'));
 }
 function toDayjs(ymd) {
@@ -46,8 +47,11 @@ function toDayjs(ymd) {
   const [y, ym] = [f(ymd/10000), f(ymd/100)]
   return dayjs(new Date(y, ym-y*100-1, ymd-ym*100));
 }
-function getPeriodStart(last, multi, period) {
-  return toInt(toDayjs(last).subtract(multi, period.toLowerCase()));
+function getPeriodStart(lastDay, multi, period) {
+  return lastDay.subtract(multi, period);
+}
+function toIndex(ymd, startDay) {
+  return toDayjs(ymd).diff(startDay, 'day');
 }
 
 export default {
@@ -70,7 +74,6 @@ export default {
       habits: [],
       dates: [],
       dayRange: 14,
-      start: 0,
     }
   },
   async mounted () {
@@ -124,7 +127,7 @@ export default {
     async openJournal(i) {
       const day = await logseq.DB.datascriptQuery(`
         [:find (pull ?p [:block/name])
-         :where [?p :block/journal-day ${this.start + i + 1}] ] `)
+         :where [?p :block/journal-day ${toYMD(this.dates[i])}] ] `)
       try {
         logseq.App.pushState('page', { name: day[0][0].name });
         logseq.hideMainUI();
@@ -142,13 +145,14 @@ export default {
       if (m == null)
         return null;
       const {times, multi=1, timeframe} = m.groups;
-      return {times, multi, timeframe};
+      return {times, multi, timeframe: timeframe==='m' ? 'M' : timeframe};
     },
     getPeriodText(p) {
       return `${p.times} / ${p.multi > 1 ? p.multi : ''}${p.timeframe}`;
     },
-    async getHabits(start, end) {
+    async getHabits(startDay, end) {
       const s = logseq.settings;
+      const start = toYMD(startDay);
       const habits = await logseq.DB.datascriptQuery(`
         [:find (pull ?b [:block/content {:block/page [:block/journal-day]}])
          :where
@@ -172,12 +176,12 @@ export default {
         const t = s[title];
         H[title] = H[title] || {
           title,
-          track: Array(end-start).fill(0),
+          track: Array(this.dayRange).fill(0),
           period: t?.period ? this.getPeriod(t.period) : null,
           periodText: t ? t.period : "",
           hidden: t?.hidden,
         };
-        H[title].track[h[0].page['journal-day']-start-1] = count;
+        H[title].track[toIndex(h[0].page['journal-day'], startDay)] = count;
       } 
       return H;
     },
@@ -189,23 +193,22 @@ export default {
       const startDay = dayjs().subtract(this.dayRange, 'day');
       this.dates = [...Array(this.dayRange)].map((_,i) => startDay.add(i+1,'d'));
 
-      const end = toInt(dayjs())
-      const start = toInt(startDay);
-      let habits = await this.getHabits(start, end)
+      const end = toYMD(dayjs())
+      let habits = await this.getHabits(startDay, end)
 
-      const oldest = Math.min.apply(Math, Object.values(habits).map(function(h) {
+      const oldestDay = dayjs.min(Object.values(habits).map(function(h) {
         const p = h.period;
-        return p != null ? getPeriodStart(start, p.multi, p.timeframe) : start;
+        return p != null ? getPeriodStart(startDay, p.multi, p.timeframe) : startDay;
       }));
-      const offset = start - oldest;
-      const check = await this.getHabits(oldest, end);
+      const offset = startDay.diff(oldestDay, 'day');
+      const check = await this.getHabits(oldestDay, end);
       for (let h of Object.values(habits)) {
         const c = check[h.title];
         if (h.period != null) {
           const {times, multi, timeframe} = h.period;
           // check previous habit performance
           h.result = h.track.map((_,i) => {
-            return times <= c.track.slice(getPeriodStart(start+i+1, multi, timeframe)-oldest, offset+i+1).reduce((a, b) => a + b, 0)
+            return times <= c.track.slice(getPeriodStart(startDay.add(i+1, 'day'), multi, timeframe).diff(oldestDay, 'day'), offset+i+1).reduce((a, b) => a + b, 0)
               ? "success"
               : "failure";
             }
@@ -213,7 +216,6 @@ export default {
         }
       }
       
-      this.start = start;
       this.habits = Object.values(habits);
       
       this.$nextTick(this.setLeftPosition)
