@@ -62,7 +62,7 @@ export default {
       visible: false,
       gear: false,
       colors: {},
-      left: 0,
+      left: 25,
       defaults:  {
         habitText: "Habits",
         dateFormat: String.raw`D.M\ndd`,

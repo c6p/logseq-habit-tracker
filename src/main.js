@@ -20,15 +20,13 @@ function main() {
 
   logseq.provideStyle(`
     div[data-injected-ui=show-habits-${key}] {
-      display: flex;
-      align-items: center;
       font-size: 20px;
     }
   `)
 
   logseq.App.registerUIItem('toolbar', {
     key: 'show-habits',
-    template: `<a data-on-click="show" title="Habits" class="opacity-60 hover:opacity-100">🗹</a>`,
+    template: `<a class="button" data-on-click="show" title="Habits" class="opacity-60 hover:opacity-100">🗹</a>`,
   })
 
   createApp(App).mount('#app');
