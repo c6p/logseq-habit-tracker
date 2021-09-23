@@ -9,7 +9,7 @@ html, body {
   user-select: none;
 }
 
-#wrapper {
+#habit-wrapper {
   position: absolute;
   left: 0;
   top: 0;

@@ -1,6 +1,6 @@
 <template>
-  <div id="wrapper" @click="onClickOutside" :style="colors">
-    <div id="habit-tracker" v-if="visible" ref="div" :style="{left: left+'px'}">
+  <div id="habit-wrapper" ref="wrap" @click="onClickOutside">
+    <div id="habit-tracker" ref="div" v-if="visible" :style="style">
       <button id="gear" @click="toggleSettings">⚙️</button>
       <div id="settings" v-show="gear">
         <label>Block content: <input type="text" :placeholder="defaults.habitText" :value="habitText" @change="(e)=>set('habitText', e.target.value)" /></label>
@@ -8,7 +8,7 @@
           <input type="text" :placeholder="defaults.dateFormat" :value="dateFormat" @change="(e)=>set('dateFormat', e.target.value)" />
         </label>
         <label>Date <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/width#syntax" target="_blank" title="CSS width property. View syntax ->">width</a>:
-          <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth" @change="(e)=>{left=0; set('dateWidth', e.target.value)}" />
+          <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth" @change="(e)=>{style.left=0; set('dateWidth', e.target.value)}" />
         </label>
       </div>
       <table>
@@ -61,8 +61,7 @@ export default {
     return {
       visible: false,
       gear: false,
-      colors: {},
-      left: 25,
+      style: { left: '25px' },
       defaults:  {
         habitText: "Habits",
         dateFormat: String.raw`D.M\ndd`,
@@ -104,14 +103,14 @@ export default {
         color = s.getPropertyValue('--ls-primary-text-color');
         input = s.getPropertyValue('--ls-secondary-background-color');
       } catch (_) { }
-      this.colors = {
+      this.style = Object.assign(this.style, {
         '--background': background,
         '--color': color,
         '--input': input,
         '--shadow': mode === 'dark' ? 'black' : 'gray',
         '--red': mode === 'dark' ? '#500' : '#ffcccb',
         '--green': mode === 'dark' ? '#050' : '#d7ffd9',
-      } 
+      }) 
     },
     toggleSettings() {
       this.left = 0;
@@ -119,11 +118,9 @@ export default {
       this.$nextTick(this.setLeftPosition)
     },
     setLeftPosition() {
-      const id = logseq.baseInfo.id;
-      const el = top.document.querySelector(`div[data-injected-ui=show-habits-${id}]`);
       const {width} = this.$refs.div.getBoundingClientRect();
-      const {left} = el.getBoundingClientRect();
-      this.left = Math.min(window.innerWidth - width, left - width/2);
+      const {left} = this.$refs.wrap.dataset;
+      this.style.left = Math.min(window.innerWidth - width, left - width/2) + 'px';
     },
     onClickOutside ({ target }) {
       const inner = target.closest('#habit-tracker')

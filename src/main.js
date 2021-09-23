@@ -5,7 +5,10 @@ import './index.css'
 
 function createModel() {
   return {
-    show() {
+    show(e) {
+      const { rect } = e
+      const wrap = document.querySelector('#habit-wrapper')
+      wrap.dataset.left = rect.left;
       logseq.showMainUI()
     },
   }
@@ -16,10 +19,8 @@ function main() {
     zIndex: 11,
   })
 
-  const key = logseq.baseInfo.id
-
   logseq.provideStyle(`
-    div[data-injected-ui=show-habits-${key}] {
+    div[data-injected-ui=show-habits-${logseq.baseInfo.id}] {
       font-size: 20px;
       padding: 0.25rem;
       margin: 0 0.25rem;
@@ -29,7 +30,7 @@ function main() {
 
   logseq.App.registerUIItem('toolbar', {
     key: 'show-habits',
-    template: `<a data-on-click="show" title="Habits" class="opacity-60 hover:opacity-100">🗹</a>`,
+    template: `<a data-on-click="show" data-rect title="Habits" class="opacity-60 hover:opacity-100">🗹</a>`,
   })
 
   createApp(App).mount('#app');
