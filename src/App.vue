@@ -95,11 +95,19 @@ export default {
     },
     setTheme({mode}) {
       // read theme colors
-      const s = getComputedStyle(window.parent.document.documentElement);
+      let background = mode === 'dark' ? 'rgb(255 255 255 / 90%)' : '#433f38';
+      let color = mode === 'dark' ? 'rgb(55, 60, 63)' : '#f8f8f8';
+      let input = mode === 'dark' ? 'rgb(47, 52, 55)' : '#fff';
+      try {
+        const s = getComputedStyle(window.parent.document.documentElement);
+        background = s.getPropertyValue('--ls-primary-background-color');
+        color = s.getPropertyValue('--ls-primary-text-color');
+        input = s.getPropertyValue('--ls-secondary-background-color');
+      } catch (_) { }
       this.colors = {
-        '--background': s.getPropertyValue('--ls-primary-background-color'),
-        '--color': s.getPropertyValue('--ls-primary-text-color'),
-        '--input': s.getPropertyValue('--ls-secondary-background-color'),
+        '--background': background,
+        '--color': color,
+        '--input': input,
         '--shadow': mode === 'dark' ? 'black' : 'gray',
         '--red': mode === 'dark' ? '#500' : '#ffcccb',
         '--green': mode === 'dark' ? '#050' : '#d7ffd9',
