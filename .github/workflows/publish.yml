@@ -26,7 +26,7 @@ jobs:
           yarn install
           yarn build
           mkdir ${{ env.PLUGIN_NAME }}
-          cp README.md package.json ${{ env.PLUGIN_NAME }}
+          cp LICENSE README.md package.json ${{ env.PLUGIN_NAME }}
           mv dist ${{ env.PLUGIN_NAME }}
           zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
           ls
