@@ -94,14 +94,14 @@ export default {
     },
     setTheme({mode}) {
       // read theme colors
-      let background = mode === 'dark' ? 'rgb(255 255 255 / 90%)' : '#433f38';
-      let color = mode === 'dark' ? 'rgb(55, 60, 63)' : '#f8f8f8';
+      let background = mode === 'dark' ? '#433f38' : 'rgb(255 255 255 / 90%)';
+      let color = mode === 'dark' ? '#f8f8f8' : 'rgb(55, 60, 63)';
       let input = mode === 'dark' ? 'rgb(47, 52, 55)' : '#fff';
       try {
         const s = getComputedStyle(window.parent.document.documentElement);
-        background = s.getPropertyValue('--ls-primary-background-color');
-        color = s.getPropertyValue('--ls-primary-text-color');
-        input = s.getPropertyValue('--ls-secondary-background-color');
+        //background = s.getPropertyValue('--ls-primary-background-color');
+        //color = s.getPropertyValue('--ls-primary-text-color');
+        //input = s.getPropertyValue('--ls-secondary-background-color');
       } catch (_) { }
       this.style = Object.assign(this.style, {
         '--background': background,
@@ -120,7 +120,7 @@ export default {
     setLeftPosition() {
       const {width} = this.$refs.div.getBoundingClientRect();
       const {left} = this.$refs.wrap.dataset;
-      this.style.left = Math.min(window.innerWidth - width, left - width/2) + 'px';
+      this.style = Object.assign(this.style, { left: Math.min(window.innerWidth - width, left - width/2) + 'px' });
     },
     onClickOutside ({ target }) {
       const inner = target.closest('#habit-tracker')
@@ -205,19 +205,21 @@ export default {
         const p = h.period;
         return p != null ? getPeriodStart(startDay, p.multi, p.timeframe) : startDay;
       }));
-      const offset = startDay.diff(oldestDay, 'day');
-      const check = await this.getHabits(oldestDay, end);
-      for (let h of Object.values(habits)) {
-        const c = check[h.title];
-        if (h.period != null) {
-          const {times, multi, timeframe} = h.period;
-          // check previous habit performance
-          h.result = h.track.map((_,i) => {
-            return times <= c.track.slice(getPeriodStart(startDay.add(i+1, 'day'), multi, timeframe).diff(oldestDay, 'day'), offset+i+1).reduce((a, b) => a + b, 0)
-              ? "success"
-              : "failure";
-            }
-          );
+      if (oldestDay !== null) {
+        const offset = startDay.diff(oldestDay, 'day');
+        const check = await this.getHabits(oldestDay, end);
+        for (let h of Object.values(habits)) {
+          const c = check[h.title];
+          if (h.period != null) {
+            const {times, multi, timeframe} = h.period;
+            // check previous habit performance
+            h.result = h.track.map((_,i) => {
+              return times <= c.track.slice(getPeriodStart(startDay.add(i+1, 'day'), multi, timeframe).diff(oldestDay, 'day'), offset+i+1).reduce((a, b) => a + b, 0)
+                ? "success"
+                : "failure";
+              }
+            );
+          }
         }
       }
       
