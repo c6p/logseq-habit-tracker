@@ -99,9 +99,9 @@ export default {
       let input = mode === 'dark' ? 'rgb(47, 52, 55)' : '#fff';
       try {
         const s = getComputedStyle(window.parent.document.documentElement);
-        //background = s.getPropertyValue('--ls-primary-background-color');
-        //color = s.getPropertyValue('--ls-primary-text-color');
-        //input = s.getPropertyValue('--ls-secondary-background-color');
+        background = s.getPropertyValue('--ls-primary-background-color');
+        color = s.getPropertyValue('--ls-primary-text-color');
+        input = s.getPropertyValue('--ls-secondary-background-color');
       } catch (_) { }
       this.style = Object.assign(this.style, {
         '--background': background,
