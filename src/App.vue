@@ -15,7 +15,7 @@
         <tr>
           <th v-show="gear">Hidden</th>
           <th class="period">Frequency <br>/ Period</th>
-          <th>Habits</th>
+          <th>Habits <button @click="prev">&lt;</button><button @click="next">&gt;</button></th>
           <th v-for="(d,i) in dates" :key="d" :style="{width: dateWidth || defaults.dateWidth}" :class="['track', ['0','6'].includes(d.format('d')) ? 'weekend' : '']" @click="openJournal(i)">
             {{ d.format((dateFormat || defaults.dateFormat).replaceAll('\\n', '\n')) }}
           </th>
@@ -73,6 +73,7 @@ export default {
       habits: [],
       dates: [],
       dayRange: 14,
+      endDay: dayjs()
     }
   },
   async mounted () {
@@ -83,6 +84,7 @@ export default {
     logseq.on('ui:visible:changed', ({ visible }) => {
       if (visible) {
         this.visible = visible;
+        this.endDay = dayjs();
         this.update();
       }
     })
@@ -190,15 +192,23 @@ export default {
       } 
       return H;
     },
+    async prev() {
+      this.endDay = this.endDay.subtract(this.dayRange, 'day');
+      this.update()
+    },
+    async next() {
+      this.endDay = this.endDay.add(this.dayRange, 'day');
+      this.update()
+    },
     async update () {
       const s = logseq.settings;
       this.habitText = s.habitText;
       this.dateFormat = s.dateFormat;
       this.dateWidth = s.dateWidth;
-      const startDay = dayjs().subtract(this.dayRange, 'day');
+      const startDay = this.endDay.subtract(this.dayRange, 'day');
       this.dates = [...Array(this.dayRange)].map((_,i) => startDay.add(i+1,'d'));
 
-      const end = toYMD(dayjs())
+      const end = toYMD(this.endDay)
       let habits = await this.getHabits(startDay, end)
 
       const oldestDay = dayjs.min(Object.values(habits).map(function(h) {
