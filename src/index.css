@@ -30,7 +30,7 @@ a { color: var(--color); }
 input { background: var(--input); color: var(--color); width: 5em; text-align: center; }
 th { font-size: 70%; padding: .5em 0; }
 .hidden, .hidden input { width: 1em; text-align: center; }
-.habit { width: 1em; white-space: nowrap; }
+.habit { min-width: 10em; white-space: nowrap; }
 .weekend { background: var(--input); }
 .track { cursor: pointer; }
 th.track { white-space: pre-line; }

@@ -118,14 +118,14 @@ export default {
       }) 
     },
     toggleSettings() {
-      this.left = 0;
+      this.style.left = '25px';
       this.gear = !this.gear;
       this.$nextTick(this.setLeftPosition)
     },
     setLeftPosition() {
       const {width} = this.$refs.div.getBoundingClientRect();
       const {left} = this.$refs.wrap.dataset;
-      this.style = Object.assign(this.style, { left: Math.min(window.innerWidth - width, left - width/2) + 'px' });
+      this.style = Object.assign(this.style, { left: Math.max(25, Math.min(window.innerWidth - width, left - width/2)) + 'px' });
     },
     onClickOutside ({ target }) {
       const inner = target.closest('#habit-tracker')
