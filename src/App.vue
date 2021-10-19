@@ -53,6 +53,9 @@ function getPeriodStart(lastDay, multi, period) {
 function toIndex(ymd, startDay) {
   return toDayjs(ymd).diff(startDay, 'day');
 }
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&');
+}
 
 export default {
   name: 'App',
@@ -165,7 +168,7 @@ export default {
          :where
          [?b :block/parent ?p]
          [?p :block/content ?c]
-         [(re-pattern "${this.habitText || this.defaults.habitText}\\n?") ?re]
+         [(re-pattern " *?${escapeRegExp(this.habitText || this.defaults.habitText)} *?\\n?") ?re]
          [(re-matches ?re ?c)]
          [?p :block/page ?page]
          [?page :block/journal?]
