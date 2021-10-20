@@ -154,7 +154,7 @@ export default {
       await logseq.updateSettings({[key]: val})
     },
     async setHabitProp(h,prop,val) {
-      await logseq.updateSettings({[h.habit]: {[prop]: val}})
+      await logseq.updateSettings({habits: {[h.habit]: {[prop]: val}} })
     },
     getPeriod(p) {
       const re = /(?<times>\d+)\s*\/\s*(?<multi>\d+)?(?<timeframe>[dwmy])/;
@@ -198,7 +198,7 @@ export default {
         let {habit,count} = match.groups;
         habit = habit.replace(habitText, '').trim();
         count = typeof count !== 'undefined' ? count.split(',').length : 1;
-        const t = s[habit];
+        const t = 'habits' in s ? s.habits[habit] : s[habit]; // backwards compatibility
         H[habit] = H[habit] || {
           habit,
           track: Array(this.dayRange).fill(0),
