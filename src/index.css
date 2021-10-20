@@ -26,7 +26,7 @@ html, body {
   max-width: 100%;
 }
 a { color: var(--color); }
-#settings { display: flex; justify-content: space-around; margin-bottom: .5em; }
+#settings div { display: flex; justify-content: space-around; margin-bottom: .5em; }
 input { background: var(--input); color: var(--color); width: 5em; text-align: center; }
 th { font-size: 70%; padding: .5em 0; }
 .hidden, .hidden input { width: 1em; text-align: center; }

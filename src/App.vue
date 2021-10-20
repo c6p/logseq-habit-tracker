@@ -3,13 +3,18 @@
     <div id="habit-tracker" ref="div" v-if="visible" :style="style">
       <button id="gear" @click="toggleSettings">⚙️</button>
       <div id="settings" v-show="gear">
-        <label>Block content: <input type="text" :placeholder="defaults.habitText" :value="habitText" @change="(e)=>set('habitText', e.target.value)" /></label>
-        <label>Date <a href="https://day.js.org/docs/en/display/format" target="_blank" title="'\n' adds a new line. View syntax ->">format</a>:
-          <input type="text" :placeholder="defaults.dateFormat" :value="dateFormat" @change="(e)=>set('dateFormat', e.target.value)" />
-        </label>
-        <label>Date <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/width#syntax" target="_blank" title="CSS width property. View syntax ->">width</a>:
-          <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth" @change="(e)=>{style.left=0; set('dateWidth', e.target.value)}" />
-        </label>
+        <div>
+          <label>Habit marker: <input type="text" :placeholder="defaults.habitText" :value="habitText" @change="(e)=>set('habitText', e.target.value)" /></label>
+          <label>Habit pattern: <input type="text" :placeholder="defaults.habitPattern" :value="habitPattern" @change="(e)=>set('habitPattern', e.target.value)" /></label>
+        </div>
+        <div>
+          <label>Date <a href="https://day.js.org/docs/en/display/format" target="_blank" title="'\n' adds a new line. View syntax ->">format</a>:
+            <input type="text" :placeholder="defaults.dateFormat" :value="dateFormat" @change="(e)=>set('dateFormat', e.target.value)" />
+          </label>
+          <label>Date <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/width#syntax" target="_blank" title="CSS width property. View syntax ->">width</a>:
+            <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth" @change="(e)=>{style.left=0; set('dateWidth', e.target.value)}" />
+          </label>
+        </div>
       </div>
       <table>
         <tr>
@@ -23,7 +28,7 @@
         <tr v-show="gear || !h.hidden" v-for="h in habits" :key="h">
           <td v-show="gear" class="hidden"><input type="checkbox" :checked="h.hidden" @change="(e)=>setHabitProp(h, 'hidden', e.target.checked)"/></td>
           <td class="period"><input type="text" :value="h.periodText" @change="(e)=>setHabitProp(h, 'period', e.target.value)"/></td>
-          <td class="habit">{{ h.title }}</td>
+          <td class="habit">{{ h.habit }}</td>
           <td v-for="(v,i) in h.track" :key="v" :class="['track', 'result' in h ? h.result[i] : '']" @click="openJournal(i)">
             {{ v > 0 ? v : "" }}
           </td>
@@ -66,11 +71,13 @@ export default {
       gear: false,
       style: { left: '25px' },
       defaults:  {
-        habitText: "Habits",
+        habitText: "#habit",
+        habitPattern: String.raw`^(?<habit>.*?)(?:| - (?<count>.*?))$`,
         dateFormat: String.raw`D.M\ndd`,
         dateWidth: "2em",
       },
       habitText: "",
+      habitPattern: "",
       dateFormat: "",
       dateWidth: "",
       habits: [],
@@ -147,7 +154,7 @@ export default {
       await logseq.updateSettings({[key]: val})
     },
     async setHabitProp(h,prop,val) {
-      await logseq.updateSettings({[h.title]: {[prop]: val}})
+      await logseq.updateSettings({[h.habit]: {[prop]: val}})
     },
     getPeriod(p) {
       const re = /(?<times>\d+)\s*\/\s*(?<multi>\d+)?(?<timeframe>[dwmy])/;
@@ -163,14 +170,20 @@ export default {
     async getHabits(startDay, end) {
       const s = logseq.settings;
       const start = toYMD(startDay);
+      const re = new RegExp(this.habitPattern || this.defaults.habitPattern, 'm');
+      const habitText = escapeRegExp(this.habitText || this.defaults.habitText);
       const habits = await logseq.DB.datascriptQuery(`
         [:find (pull ?b [:block/content {:block/page [:block/journal-day]}])
          :where
-         [?b :block/parent ?p]
-         [?p :block/content ?c]
-         [(re-pattern " *?${escapeRegExp(this.habitText || this.defaults.habitText)} *?\\n?") ?re]
-         [(re-matches ?re ?c)]
-         [?p :block/page ?page]
+         (or-join [?b]
+          (and [?b :block/parent ?p]
+               [?p :block/content ?pc]
+               [(re-pattern " *?${habitText} *?\\n?") ?pre]
+               [(re-matches ?pre ?pc)])
+          (and [?b :block/content ?c]
+               [(re-pattern "(^| )${habitText}( |$)") ?re]
+               [(re-find ?re ?c)]) )
+         [?b :block/page ?page]
          [?page :block/journal?]
          [?page :block/journal-day ?d]
          [(> ?d ${start})]
@@ -179,19 +192,21 @@ export default {
       `);
       let H = {};
       for (const h of habits) {
-        const [title, times] = h[0].content.split('\n')[0].split(' - ').map(x => x.trim());
-        if (!title)
+        const match = re.exec(h[0].content);
+        if (!match)
           continue
-        const count = typeof times !== 'undefined' ? times.split(',').length : 1;
-        const t = s[title];
-        H[title] = H[title] || {
-          title,
+        let {habit,count} = match.groups;
+        habit = habit.replace(habitText, '').trim();
+        count = typeof count !== 'undefined' ? count.split(',').length : 1;
+        const t = s[habit];
+        H[habit] = H[habit] || {
+          habit,
           track: Array(this.dayRange).fill(0),
           period: t?.period ? this.getPeriod(t.period) : null,
           periodText: t ? t.period : "",
           hidden: t?.hidden,
         };
-        H[title].track[toIndex(h[0].page['journal-day'], startDay)] = count;
+        H[habit].track[toIndex(h[0].page['journal-day'], startDay)] += count;
       } 
       return H;
     },
@@ -206,6 +221,7 @@ export default {
     async update () {
       const s = logseq.settings;
       this.habitText = s.habitText;
+      this.habitPattern = s.habitPattern;
       this.dateFormat = s.dateFormat;
       this.dateWidth = s.dateWidth;
       const startDay = this.endDay.subtract(this.dayRange, 'day');
@@ -222,7 +238,7 @@ export default {
         const offset = startDay.diff(oldestDay, 'day');
         const check = await this.getHabits(oldestDay, end);
         for (let h of Object.values(habits)) {
-          const c = check[h.title];
+          const c = check[h.habit];
           if (h.period != null) {
             const {times, multi, timeframe} = h.period;
             // check previous habit performance
