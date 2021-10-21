@@ -171,18 +171,21 @@ export default {
       const s = logseq.settings;
       const start = toYMD(startDay);
       const re = new RegExp(this.habitPattern || this.defaults.habitPattern, 'm');
-      const habitText = escapeRegExp(this.habitText || this.defaults.habitText);
+      const habitText = this.habitText || this.defaults.habitText;
+      const habitPattern = escapeRegExp(habitText);
       const habits = await logseq.DB.datascriptQuery(`
         [:find (pull ?b [:block/content {:block/page [:block/journal-day]}])
          :where
          (or-join [?b]
           (and [?b :block/parent ?p]
                [?p :block/content ?pc]
-               [(re-pattern " *?${habitText} *?\\n?") ?pre]
+               [(re-pattern " *?${habitPattern} *?\\n?") ?pre]
                [(re-matches ?pre ?pc)])
           (and [?b :block/content ?c]
-               [(re-pattern "(^| )${habitText}( |$)") ?re]
-               [(re-find ?re ?c)]) )
+               [(re-pattern "(^| )${habitPattern}( |$)") ?re]
+               [(re-find ?re ?c)]
+               [(re-pattern " *?${habitPattern} *?\\n?") ?pre]
+               (not [(re-matches ?pre ?c)])) )
          [?b :block/page ?page]
          [?page :block/journal?]
          [?page :block/journal-day ?d]
