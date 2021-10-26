@@ -50,7 +50,7 @@ function toYMD(fromDayjs) {
 function toDayjs(ymd) {
   const f = Math.floor;
   const [y, ym] = [f(ymd/10000), f(ymd/100)]
-  return dayjs(new Date(y, ym-y*100-1, ymd-ym*100));
+  return dayjs(new Date(y, ym-y*100-1, ymd-ym*100)).startOf('day');
 }
 function getPeriodStart(lastDay, multi, period) {
   return lastDay.subtract(multi, period);
@@ -83,7 +83,7 @@ export default {
       habits: [],
       dates: [],
       dayRange: 14,
-      endDay: dayjs()
+      endDay: dayjs().startOf('day')
     }
   },
   async mounted () {
@@ -94,7 +94,7 @@ export default {
     logseq.on('ui:visible:changed', ({ visible }) => {
       if (visible) {
         this.visible = visible;
-        this.endDay = dayjs();
+        this.endDay = dayjs().startOf('day');
         this.update();
       }
     })
@@ -167,9 +167,11 @@ export default {
     getPeriodText(p) {
       return `${p.times} / ${p.multi > 1 ? p.multi : ''}${p.timeframe}`;
     },
-    async getHabits(startDay, end) {
+    async getHabits(startDay, endDay) {
       const s = logseq.settings;
       const start = toYMD(startDay);
+      const end = toYMD(endDay);
+      const dayRange = endDay.diff(startDay, 'day') + 1;
       const re = new RegExp(this.habitPattern || this.defaults.habitPattern, 'm');
       const habitText = this.habitText || this.defaults.habitText;
       const habitPattern = escapeRegExp(habitText);
@@ -189,7 +191,7 @@ export default {
          [?b :block/page ?page]
          [?page :block/journal?]
          [?page :block/journal-day ?d]
-         [(> ?d ${start})]
+         [(>= ?d ${start})]
          [(<= ?d ${end})]
         ]
       `);
@@ -204,7 +206,7 @@ export default {
         const t = 'habits' in s ? s.habits[habit] : s[habit]; // backwards compatibility
         H[habit] = H[habit] || {
           habit,
-          track: Array(this.dayRange).fill(0),
+          track: Array(dayRange).fill(0),
           period: t?.period ? this.getPeriod(t.period) : null,
           periodText: t ? t.period : "",
           hidden: t?.hidden,
@@ -227,19 +229,18 @@ export default {
       this.habitPattern = s.habitPattern;
       this.dateFormat = s.dateFormat;
       this.dateWidth = s.dateWidth;
-      const startDay = this.endDay.subtract(this.dayRange, 'day');
-      this.dates = [...Array(this.dayRange)].map((_,i) => startDay.add(i+1,'d'));
+      const startDay = this.endDay.subtract(this.dayRange-1, 'day');
+      this.dates = [...Array(this.dayRange)].map((_,i) => startDay.add(i,'d'));
 
-      const end = toYMD(this.endDay)
-      let habits = await this.getHabits(startDay, end)
+      let habits = await this.getHabits(startDay, this.endDay)
 
       const oldestDay = dayjs.min(Object.values(habits).map(function(h) {
         const p = h.period;
-        return p != null ? getPeriodStart(startDay, p.multi, p.timeframe) : startDay;
+        return p != null ? getPeriodStart(startDay.add(1, 'day'), p.multi, p.timeframe) : startDay;
       }));
       if (oldestDay !== null) {
         const offset = startDay.diff(oldestDay, 'day');
-        const check = await this.getHabits(oldestDay, end);
+        const check = await this.getHabits(oldestDay, this.endDay);
         for (let h of Object.values(habits)) {
           const c = check[h.habit];
           if (h.period != null) {

@@ -25,6 +25,17 @@ Instead of nesting under `#habit` tag you can also use it in every line and chan
 ```
 Habit Pattern: `\d{2}:\d{2} (?<habit>.*)`
 
+##### Example 1a
+With optional time and notes. Thanks @someinternetguy
+```
+pushups #habit
+pushups #habit did 10 more than usual today, go me!
+14:17 pushups #habit
+14:17 pushups #habit yay, I remembered to work out today!
+```
+Habit pattern: `((\d{2}:\d{2})|())(?<habit>.*#habit(\s|\b))`
+
+
 ### Running the Plugin
 
 - `yarn && yarn build` in terminal to install dependencies.
