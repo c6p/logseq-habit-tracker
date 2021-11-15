@@ -1,13 +1,19 @@
 # Logseq Habit Tracker
-![habit1](https://user-images.githubusercontent.com/80478/129489611-65f5fc2d-88e0-4479-85f1-1a49846a2491.jpg)
-![habits2](https://user-images.githubusercontent.com/80478/129489612-2809f4c3-47f5-4070-8c18-ba830fc79c54.jpg)
+![image](https://user-images.githubusercontent.com/80478/141788606-44566dfe-bbf7-4272-a3ea-5a9a48eba313.png)
+![image](https://user-images.githubusercontent.com/80478/141792679-3c164eab-be20-4c2f-a4fe-757676c3b4c7.png)
 
 Record your habits under `#habit` block in daily journal, then easily track your habits.
 
-Habit format is `Habit text - 1,2,3` and you can add notes after a new line.  
-Default pattern to match it is `^(?<habit>.*?)(?:| - (?<count>.*?))$` where:
-* **habit** is the identifier for the habit and
-* **count** is comma separated list of things (e.g. numbers, time).
+Click on gear (⚙️) icon to edit settings.
+* **Habit marker** is a keyword to match habits: `#habit`, it was `Habits` before v0.2.0
+* **Habit pattern** is the [regex](https://regex101.com/) to parse habits. See [Customization](#customization) for more examples.  
+  Default format is `Habit text - 1,2,3` and you can add notes after a new line. 
+  `^(?<habit>.*?)(?:| - (?<count>.*?))$`  
+  * **habit** is the identifier for the habit and
+  * **count** is comma separated list of things (e.g. numbers, time)
+* **Date [format](https://day.js.org/docs/en/display/format)**: `D.M\ndd` where `\n` is new line.
+* **Date [width](https://developer.mozilla.org/en-US/docs/Web/CSS/width#syntax)**: `2em`
+
 
 For `Frequency / Period`, period is one of `d` (day), `w` (week), `m` (month), `y` (year).
 - `3/d` means 3 times per day
