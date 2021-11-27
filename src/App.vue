@@ -29,7 +29,7 @@
           <td v-show="gear" class="hidden"><input type="checkbox" :checked="h.hidden" @change="(e)=>setHabitProp(h, 'hidden', e.target.checked)"/></td>
           <td class="period"><input type="text" :value="h.periodText" @change="(e)=>setHabitProp(h, 'period', e.target.value)"/></td>
           <td class="habit">{{ h.habit }}</td>
-          <td v-for="(v,i) in h.track" :key="v" :class="['track', 'result' in h ? h.result[i] : '']" @click="openJournal(i)">
+          <td v-for="(v,i) in h.track.slice(startIndex, startIndex+dayRange)" :key="i" :class="['track', 'result' in h ? success[h.result[startIndex+i]] : '']" @click="openJournal(i)">
             {{ v > 0 ? v : "" }}
           </td>
         </tr>
@@ -55,12 +55,27 @@ function toDayjs(ymd) {
 function getPeriodStart(lastDay, multi, period) {
   return lastDay.subtract(multi, period);
 }
-function toIndex(ymd, startDay) {
-  return toDayjs(ymd).diff(startDay, 'day');
+function toIndex(day, startDay) {
+  return day.diff(startDay, 'day');
 }
 function escapeRegExp(string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\\\$&');
 }
+function getPeriod(p) {
+  const re = /(?<times>\d+)\s*\/\s*(?<multi>\d+)?(?<timeframe>[dwmy])/;
+  const m = re.exec(p.toLowerCase());
+  if (m == null)
+    return null;
+  const {times, multi=1, timeframe} = m.groups;
+  return {times, multi, timeframe: timeframe==='m' ? 'M' : timeframe};
+};
+function habitSettings(s) {
+  return 'habits' in s ? s.habits : s; // backwards compatibility
+}
+
+const today = dayjs().startOf('day');
+const days = 14;
+const minDate = today.subtract(days-1, 'day');
 
 export default {
   name: 'App',
@@ -70,11 +85,12 @@ export default {
       visible: false,
       gear: false,
       style: {},
+      success: {true:"success", false: "failure"},
       defaults:  {
         habitText: "#habit",
         habitPattern: String.raw`^(?<habit>.*?)(?:| - (?<count>.*?))$`,
         dateFormat: String.raw`D.M\ndd`,
-        dateWidth: "2em",
+        dateWidth: "3em",
       },
       habitText: "",
       habitPattern: "",
@@ -82,20 +98,23 @@ export default {
       dateWidth: "",
       habits: [],
       dates: [],
-      dayRange: 14,
-      endDay: dayjs().startOf('day')
+      dayRange: days,
+      minDay: minDate,
+      startDay: minDate,
+      maxDay: today,
     }
   },
   async mounted () {
     const appUserConfig = await logseq.App.getUserConfigs();
     this.setTheme({mode: appUserConfig.preferredThemeMode});
     logseq.App.onThemeModeChanged(this.setTheme);
-    logseq.on('settings:changed', (_) => { this.update() })
-    logseq.on('ui:visible:changed', ({ visible }) => {
+    logseq.on('settings:changed', (_) => { this.updateHabits() })
+    logseq.on('ui:visible:changed', async ({ visible }) => {
       if (visible) {
         this.visible = visible;
         this.endDay = dayjs().startOf('day');
-        this.update();
+        await this.updateHabits();
+        this.toLast();
       }
     })
   },
@@ -149,46 +168,41 @@ export default {
     async setHabitProp(h,prop,val) {
       await logseq.updateSettings({habits: {[h.habit]: {[prop]: val}} })
     },
-    getPeriod(p) {
-      const re = /(?<times>\d+)\s*\/\s*(?<multi>\d+)?(?<timeframe>[dwmy])/;
-      const m = re.exec(p);
-      if (m == null)
-        return null;
-      const {times, multi=1, timeframe} = m.groups;
-      return {times, multi, timeframe: timeframe==='m' ? 'M' : timeframe};
-    },
-    getPeriodText(p) {
-      return `${p.times} / ${p.multi > 1 ? p.multi : ''}${p.timeframe}`;
-    },
-    async getHabits(startDay, endDay) {
+
+    async getHabits() {
       const s = logseq.settings;
-      const start = toYMD(startDay);
-      const end = toYMD(endDay);
-      const dayRange = endDay.diff(startDay, 'day') + 1;
       const re = new RegExp(this.habitPattern || this.defaults.habitPattern, 'm');
       const habitText = this.habitText || this.defaults.habitText;
-      const habitPattern = escapeRegExp(habitText);
-      const habits = await logseq.DB.datascriptQuery(`
-        [:find (pull ?b [:block/content {:block/page [:block/journal-day]}])
+      const habitMarker = escapeRegExp(habitText);
+      const query = `
          :where
          (or-join [?b]
           (and [?b :block/parent ?p]
                [?p :block/content ?pc]
-               [(re-pattern " *?${habitPattern} *?\\n?") ?pre]
+               [(re-pattern " *?${habitMarker} *?\\n?") ?pre]
                [(re-matches ?pre ?pc)])
           (and [?b :block/content ?c]
-               [(re-pattern "(^| )${habitPattern}( |$)") ?re]
+               [(re-pattern "(^| )${habitMarker}( |$)") ?re]
                [(re-find ?re ?c)]
-               [(re-pattern " *?${habitPattern} *?\\n?") ?pre]
+               [(re-pattern " *?${habitMarker} *?\\n?") ?pre]
                (not [(re-matches ?pre ?c)])) )
          [?b :block/page ?page]
          [?page :block/journal?]
-         [?page :block/journal-day ?d]
-         [(>= ?d ${start})]
-         [(<= ?d ${end})]
-        ]
-      `);
+      `;
       let H = {};
+      const start = await logseq.DB.datascriptQuery(`[:find (min ?d) ${query} [?page :block/journal-day ?d]]`);
+      if (!start) return H;
+
+      this.startDay = toDayjs(start[0]);
+      this.minDay = dayjs.min(this.startDay, minDate);
+      const habits = await logseq.DB.datascriptQuery(`[:find (pull ?b [:block/content {:block/page [:block/journal-day]}]) ${query} ]`);
+      this.minDayToCheck = Object.values(habitSettings(s)).reduce((p,h) => {
+        if (!h?.period) return s.minDay;
+        const {multi, timeframe} = getPeriod(h.period);
+        return dayjs.min(p, getPeriodStart(this.minDay, multi, timeframe)); 
+      }, this.minDay);
+
+      const dayRange = this.maxDay.diff(this.minDayToCheck, 'day') + 1;
       for (const h of habits) {
         const match = re.exec(h[0].content);
         if (!match)
@@ -196,60 +210,58 @@ export default {
         let {habit,count} = match.groups;
         habit = habit.replace(habitText, '').trim();
         count = typeof count !== 'undefined' ? count.split(',').length : 1;
-        const t = 'habits' in s ? s.habits[habit] : s[habit]; // backwards compatibility
+        const t = habitSettings(s)[habit];
         H[habit] = H[habit] || {
           habit,
           track: Array(dayRange).fill(0),
-          period: t?.period ? this.getPeriod(t.period) : null,
+          period: t?.period ? getPeriod(t.period) : null,
           periodText: t ? t.period : "",
           hidden: t?.hidden,
         };
-        H[habit].track[toIndex(h[0].page['journal-day'], startDay)] += count;
+        H[habit].track[toIndex(toDayjs(h[0].page['journal-day']), this.minDayToCheck)] += count;
       } 
+
       return H;
     },
-    async prev() {
-      this.endDay = this.endDay.subtract(this.dayRange, 'day');
-      this.update()
+    calcMinDay() {
+
     },
-    async next() {
-      this.endDay = this.endDay.add(this.dayRange, 'day');
-      this.update()
+    prev() {
+      this.startDay = dayjs.max(this.startDay.subtract(this.dayRange, 'day'), this.minDay);
+      this.update();
     },
-    async update () {
+    next() {
+      const endDay = dayjs.min(this.startDay.add(2*this.dayRange-1, 'day'), this.maxDay);
+      this.startDay = endDay.subtract(this.dayRange-1, 'day');
+      this.update();
+    },
+    toLast() {
+      this.startDay = dayjs.max(this.maxDay.subtract(this.dayRange-1, 'day'), this.minDay);
+      this.update();
+    },
+    update() {
+      this.startIndex = toIndex(this.startDay, this.minDayToCheck);
+      this.dates = [...Array(this.dayRange)].map((_,i) => this.startDay.add(i,'d'));
+    },
+    async updateHabits () {
       const s = logseq.settings;
       this.habitText = s.habitText;
       this.habitPattern = s.habitPattern;
       this.dateFormat = s.dateFormat;
       this.dateWidth = s.dateWidth;
-      const startDay = this.endDay.subtract(this.dayRange-1, 'day');
-      this.dates = [...Array(this.dayRange)].map((_,i) => startDay.add(i,'d'));
 
-      let habits = await this.getHabits(startDay, this.endDay)
-
-      const oldestDay = dayjs.min(Object.values(habits).map(function(h) {
-        const p = h.period;
-        return p != null ? getPeriodStart(startDay.add(1, 'day'), p.multi, p.timeframe) : startDay;
-      }));
-      if (oldestDay !== null) {
-        const offset = startDay.diff(oldestDay, 'day');
-        const check = await this.getHabits(oldestDay, this.endDay);
-        for (let h of Object.values(habits)) {
-          const c = check[h.habit];
-          if (h.period != null) {
-            const {times, multi, timeframe} = h.period;
-            // check previous habit performance
-            h.result = h.track.map((_,i) => {
-              return times <= c.track.slice(getPeriodStart(startDay.add(i+1, 'day'), multi, timeframe).diff(oldestDay, 'day'), offset+i+1).reduce((a, b) => a + b, 0)
-                ? "success"
-                : "failure";
-              }
-            );
-          }
+      let habits = await this.getHabits()
+      for (let h of Object.values(habits)) {
+        if (h.period != null) {
+          const {times, multi, timeframe} = h.period;
+          // check previous habit performance
+          h.result = h.track.map((_,i) => times <= h.track.slice(
+            getPeriodStart(this.minDayToCheck.add(i+1, 'day'), multi, timeframe).diff(this.minDayToCheck, 'day'), i+1)
+            .reduce((a, b) => a + b, 0));
         }
       }
-      
       this.habits = Object.values(habits);
+      this.update();
     }
   },
 }
