@@ -119,6 +119,7 @@ export default {
       minDay: minDate,
       startDay: minDate,
       maxDay: today,
+      startIndex: 0
     }
   },
   async mounted () {
@@ -145,12 +146,12 @@ export default {
       let background = mode === 'dark' ? '#433f38' : 'rgb(255 255 255 / 90%)';
       let color = mode === 'dark' ? '#f8f8f8' : 'rgb(55, 60, 63)';
       let input = mode === 'dark' ? 'rgb(47, 52, 55)' : '#fff';
-      try {
-        const s = getComputedStyle(window.parent.document.documentElement);
-        background = s.getPropertyValue('--ls-primary-background-color');
-        color = s.getPropertyValue('--ls-primary-text-color');
-        input = s.getPropertyValue('--ls-secondary-background-color');
-      } catch (_) { }
+      //try {
+      //  const s = getComputedStyle(window.parent.document.documentElement);
+      //  background = s.getPropertyValue('--ls-primary-background-color');
+      //  color = s.getPropertyValue('--ls-primary-text-color');
+      //  input = s.getPropertyValue('--ls-secondary-background-color');
+      //} catch (_) { }
       this.style = Object.assign(this.style, {
         '--background': background,
         '--color': color,
