@@ -42,4 +42,10 @@ td.track { font-size: .8em; font-weight: bold; text-align: center; }
 .failure { background: var(--red); }
 .period, .period input { width: 5em; text-align: center; }
 .streak { width: 3em; text-align: center; }
-#gear { position: absolute; left: -2em; padding: 0; }
+#toolbar {
+  position: absolute;
+  left: -2em;
+  display: flex;
+  flex-direction: column;
+}
+#toolbar > button { padding: .2em; margin-bottom: 1em; }

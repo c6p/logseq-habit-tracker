@@ -1,7 +1,10 @@
 <template>
   <div id="habit-wrapper" ref="wrap" @click="onClickOutside">
     <div id="habit-tracker" ref="div" v-if="visible" :style="style">
-      <button id="gear" @click="toggleSettings">⚙️</button>
+      <div id="toolbar">
+        <button @click="toggleSettings" title="Open Settings">⚙️</button>
+        <button @click="downloadAsCSV" title="Download habits as CSV">🔽</button>
+      </div>
       <div id="settings" v-show="gear">
         <div>
           <label>Habit marker: <input class="m" type="text" :placeholder="defaults.habitText" :value="habitText" @change="(e)=>set('habitText', e.target.value)" /></label>
@@ -75,6 +78,16 @@ function getPeriod(p) {
 };
 function habitSettings(s) {
   return 'habits' in s ? s.habits : s; // backwards compatibility
+}
+function downloadBlob(content, filename, contentType='text/csv;charset=utf-8;') {
+  const blob = new Blob([content], { type: contentType });
+  const url = URL.createObjectURL(blob);
+
+  let a = document.createElement('a');
+  a.href = url;
+  a.setAttribute('download', filename);
+  a.click();
+  a.remove()
 }
 
 const today = dayjs().startOf('day');
@@ -172,7 +185,6 @@ export default {
     async setHabitProp(h,prop,val) {
       await logseq.updateSettings({habits: {[h.habit]: {[prop]: val}} })
     },
-
     async getHabits() {
       const s = logseq.settings;
       const re = new RegExp(this.habitPattern || this.defaults.habitPattern, 'm');
@@ -197,8 +209,7 @@ export default {
       const start = await logseq.DB.datascriptQuery(`[:find (min ?d) ${query} [?page :block/journal-day ?d]]`);
       if (!start) return H;
 
-      this.startDay = toDayjs(start[0]);
-      this.minDay = dayjs.min(this.startDay, minDate);
+      this.minDay = toDayjs(start[0]);
       const habits = await logseq.DB.datascriptQuery(`[:find (pull ?b [:block/content {:block/page [:block/journal-day]}]) ${query} ]`);
       this.minDayToCheck = Object.values(habitSettings(s)).reduce((p,h) => {
         if (!h?.period) return s.minDay;
@@ -226,9 +237,6 @@ export default {
       } 
 
       return H;
-    },
-    calcMinDay() {
-
     },
     prev() {
       this.startDay = dayjs.max(this.startDay.subtract(this.dayRange, 'day'), this.minDay);
@@ -276,6 +284,14 @@ export default {
       }
       this.habits = Object.values(habits);
       this.update();
+    },
+    async downloadAsCSV() {
+      let csv = `\ufeffDate,${this.habits.map(h => h.habit).join(',')}\r\n`;  // utf-8 hack
+      const end = toIndex(this.maxDay, this.minDayToCheck);
+      for (let i=toIndex(this.minDay, this.minDayToCheck); i<=end; i++) {
+        csv += `${this.minDayToCheck.add(i, 'd').format('YYYY-MM-DD')},${this.habits.map(h => h.track[i]).join(',')}\r\n`
+      }
+      downloadBlob(csv, 'habits.csv', 'text/csv;charset=utf-8;');
     }
   },
 }
