@@ -213,7 +213,7 @@ export default {
       this.minDay = toDayjs(start[0]);
       const habits = await logseq.DB.datascriptQuery(`[:find (pull ?b [:block/content {:block/page [:block/journal-day]}]) ${query} ]`);
       this.minDayToCheck = Object.values(habitSettings(s)).reduce((p,h) => {
-        if (!h?.period) return s.minDay;
+        if (!h?.period) return this.minDay;
         const {multi, timeframe} = getPeriod(h.period);
         return dayjs.min(p, getPeriodStart(this.minDay, multi, timeframe)); 
       }, this.minDay);
