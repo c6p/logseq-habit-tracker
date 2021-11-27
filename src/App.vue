@@ -21,6 +21,7 @@
       </div>
       <table>
         <tr>
+          <th v-show="gear">Order</th>
           <th v-show="gear">Hidden</th>
           <th class="streak">Longest<br>Streak</th>
           <th class="streak">Current<br>Streak</th>
@@ -30,11 +31,15 @@
             {{ d.format((dateFormat || defaults.dateFormat).replaceAll('\\n', '\n')) }}
           </th>
         </tr>
-        <tr v-show="gear || !h.hidden" v-for="h in habits" :key="h">
+        <tr v-show="gear || !h.hidden" v-for="(h,idx) in habits" :key="h">
+          <td v-show="gear">
+            <button class="up" @click="move(idx,-1)">&lt;</button>
+            <button class="down" @click="move(idx,1)">&lt;</button>
+          </td>
           <td v-show="gear" class="hidden"><input type="checkbox" :checked="h.hidden" @change="(e)=>setHabitProp(h, 'hidden', e.target.checked)"/></td>
           <td class="streak">{{ h.longestStreak }}</td>
           <td class="streak">{{ h.streak }}</td>
-          <td class="period"><input type="text" :value="h.periodText" @change="(e)=>setHabitProp(h, 'period', e.target.value)"/></td>
+          <td class="period"><input type="text" :value="h.periodText" @change="(e)=>{setHabitProp(h, 'period', e.target.value); updateHabits()}"/></td>
           <td class="habit">{{ h.habit }}</td>
           <td v-for="(v,i) in h.track.slice(startIndex, startIndex+dayRange)" :key="i" :class="['track', 'result' in h ? success[h.result[startIndex+i]] : '']" @click="openJournal(i)">
             {{ v > 0 ? v : "" }}
@@ -126,7 +131,6 @@ export default {
     const appUserConfig = await logseq.App.getUserConfigs();
     this.setTheme({mode: appUserConfig.preferredThemeMode});
     logseq.App.onThemeModeChanged(this.setTheme);
-    logseq.on('settings:changed', (_) => { this.updateHabits() })
     logseq.on('ui:visible:changed', async ({ visible }) => {
       if (visible) {
         this.visible = visible;
@@ -163,6 +167,8 @@ export default {
     },
     toggleSettings() {
       this.gear = !this.gear;
+      if (!this.gear)
+        this.updateHabits()
     },
     onClickOutside ({ target }) {
       const inner = target.closest('#habit-tracker')
@@ -233,11 +239,22 @@ export default {
           period: t?.period ? getPeriod(t.period) : null,
           periodText: t ? t.period : "",
           hidden: t?.hidden,
+          order: t?.order
         };
         H[habit].track[toIndex(toDayjs(h[0].page['journal-day']), this.minDayToCheck)] += count;
       } 
 
       return H;
+    },
+    async move(from, delta) {
+      const to = from + delta;
+      if (to < 0) return;
+      if (to > this.habits.length-1) return;
+      const tmp = this.habits[from];
+      this.habits[from] = this.habits[to];
+      this.habits[to] = tmp;
+      await this.setHabitProp(this.habits[from], 'order', from);
+      await this.setHabitProp(this.habits[to], 'order', to);
     },
     prev() {
       this.startDay = dayjs.max(this.startDay.subtract(this.dayRange, 'day'), this.minDay);
@@ -283,7 +300,7 @@ export default {
           h.longestStreak = Math.max(h.longestStreak, h.streak);
         }
       }
-      this.habits = Object.values(habits);
+      this.habits = Object.values(habits).sort((a,b) => a?.order-b?.order || 0);
       this.update();
     },
     async downloadAsCSV() {
