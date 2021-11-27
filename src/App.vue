@@ -4,15 +4,15 @@
       <button id="gear" @click="toggleSettings">⚙️</button>
       <div id="settings" v-show="gear">
         <div>
-          <label>Habit marker: <input type="text" :placeholder="defaults.habitText" :value="habitText" @change="(e)=>set('habitText', e.target.value)" /></label>
-          <label>Habit pattern: <input type="text" :placeholder="defaults.habitPattern" :value="habitPattern" @change="(e)=>set('habitPattern', e.target.value)" /></label>
+          <label>Habit marker: <input class="m" type="text" :placeholder="defaults.habitText" :value="habitText" @change="(e)=>set('habitText', e.target.value)" /></label>
+          <label>Date <a href="https://day.js.org/docs/en/display/format" target="_blank" title="'\n' adds a new line. View syntax ->">format</a>:
+            <input class="m" type="text" :placeholder="defaults.dateFormat" :value="dateFormat" @change="(e)=>set('dateFormat', e.target.value)" />
+          </label>
         </div>
         <div>
-          <label>Date <a href="https://day.js.org/docs/en/display/format" target="_blank" title="'\n' adds a new line. View syntax ->">format</a>:
-            <input type="text" :placeholder="defaults.dateFormat" :value="dateFormat" @change="(e)=>set('dateFormat', e.target.value)" />
-          </label>
+          <label>Habit pattern: <input class="l" type="text" :placeholder="defaults.habitPattern" :value="habitPattern" @change="(e)=>set('habitPattern', e.target.value)" /></label>
           <label>Date <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/width#syntax" target="_blank" title="CSS width property. View syntax ->">width</a>:
-            <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth" @change="(e)=>{style.left=0; set('dateWidth', e.target.value)}" />
+            <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth" @change="(e)=>{set('dateWidth', e.target.value)}" />
           </label>
         </div>
       </div>
@@ -69,7 +69,7 @@ export default {
     return {
       visible: false,
       gear: false,
-      style: { left: '25px' },
+      style: {},
       defaults:  {
         habitText: "#habit",
         habitPattern: String.raw`^(?<habit>.*?)(?:| - (?<count>.*?))$`,
@@ -125,14 +125,7 @@ export default {
       }) 
     },
     toggleSettings() {
-      this.style.left = '25px';
       this.gear = !this.gear;
-      this.$nextTick(this.setLeftPosition)
-    },
-    setLeftPosition() {
-      const {width} = this.$refs.div.getBoundingClientRect();
-      const {left} = this.$refs.wrap.dataset;
-      this.style = Object.assign(this.style, { left: Math.max(25, Math.min(window.innerWidth - width, left - width/2)) + 'px' });
     },
     onClickOutside ({ target }) {
       const inner = target.closest('#habit-tracker')
@@ -257,8 +250,6 @@ export default {
       }
       
       this.habits = Object.values(habits);
-      
-      this.$nextTick(this.setLeftPosition)
     }
   },
 }

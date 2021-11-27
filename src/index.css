@@ -19,15 +19,18 @@ html, body {
 #habit-tracker {
   position: absolute;
   top: 3em;
+  right: 0;
   padding-right: .5em;
   background: var(--background);
   color: var(--color);
   box-shadow: 1px 1px 8px var(--shadow);
-  max-width: 100%;
+  max-width: calc(100% - 3em);
 }
 a { color: var(--color); }
-#settings div { display: flex; justify-content: space-around; margin-bottom: .5em; }
+#settings div { display: flex; justify-content: space-between; margin-bottom: .5em; padding: 0 1em; }
 input { background: var(--input); color: var(--color); width: 5em; text-align: center; }
+input.m { width: 10em }
+input.l { width: 20em }
 th { font-size: 70%; padding: .5em 0; }
 .hidden, .hidden input { width: 1em; text-align: center; }
 .habit { min-width: 10em; white-space: nowrap; }
