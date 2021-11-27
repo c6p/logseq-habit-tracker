@@ -19,6 +19,8 @@
       <table>
         <tr>
           <th v-show="gear">Hidden</th>
+          <th class="streak">Longest<br>Streak</th>
+          <th class="streak">Current<br>Streak</th>
           <th class="period">Frequency <br>/ Period</th>
           <th>Habits <button @click="prev">&lt;</button><button @click="next">&gt;</button></th>
           <th v-for="(d,i) in dates" :key="d" :style="{width: dateWidth || defaults.dateWidth}" :class="['track', ['0','6'].includes(d.format('d')) ? 'weekend' : '']" @click="openJournal(i)">
@@ -27,6 +29,8 @@
         </tr>
         <tr v-show="gear || !h.hidden" v-for="h in habits" :key="h">
           <td v-show="gear" class="hidden"><input type="checkbox" :checked="h.hidden" @change="(e)=>setHabitProp(h, 'hidden', e.target.checked)"/></td>
+          <td class="streak">{{ h.longestStreak }}</td>
+          <td class="streak">{{ h.streak }}</td>
           <td class="period"><input type="text" :value="h.periodText" @change="(e)=>setHabitProp(h, 'period', e.target.value)"/></td>
           <td class="habit">{{ h.habit }}</td>
           <td v-for="(v,i) in h.track.slice(startIndex, startIndex+dayRange)" :key="i" :class="['track', 'result' in h ? success[h.result[startIndex+i]] : '']" @click="openJournal(i)">
@@ -258,6 +262,16 @@ export default {
           h.result = h.track.map((_,i) => times <= h.track.slice(
             getPeriodStart(this.minDayToCheck.add(i+1, 'day'), multi, timeframe).diff(this.minDayToCheck, 'day'), i+1)
             .reduce((a, b) => a + b, 0));
+          h.streak = h.longestStreak = 0;
+          for (const v of h.result) {
+            if (v)
+              h.streak++; 
+            else {
+              h.longestStreak = Math.max(h.longestStreak, h.streak);
+              h.streak = 0;
+            }
+          }
+          h.longestStreak = Math.max(h.longestStreak, h.streak);
         }
       }
       this.habits = Object.values(habits);

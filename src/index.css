@@ -41,4 +41,5 @@ td.track { font-size: .8em; font-weight: bold; text-align: center; }
 .success { background: var(--green); }
 .failure { background: var(--red); }
 .period, .period input { width: 5em; text-align: center; }
+.streak { width: 3em; text-align: center; }
 #gear { position: absolute; left: -2em; padding: 0; }
