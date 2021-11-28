@@ -35,7 +35,7 @@ th { font-size: 70%; padding: .5em 0; }
 .hidden, .hidden input { width: 1em; text-align: center; }
 .habit { min-width: 10em; white-space: nowrap; }
 .weekend { background: var(--input); }
-.track { cursor: pointer; }
+.track { cursor: pointer; color: var(--color); }
 th.track { white-space: pre-line; }
 td.track { font-size: .8em; font-weight: bold; text-align: center; }
 .success { background: var(--green); }
@@ -51,3 +51,19 @@ td.track { font-size: .8em; font-weight: bold; text-align: center; }
   flex-direction: column;
 }
 #toolbar > button { padding: .2em; margin-bottom: 1em; }
+.color-group > input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+.color-group > input[type="color"] {
+  border: none;
+  height: 100%;
+  width: 3em;
+  vertical-align: bottom;
+}
+.color-group { display: inline-block; margin-left: 1em; }
+div#color-groups {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  margin: 0;
+  padding: 0;
+}
+select.color { background: var(--input); color: inherit; }

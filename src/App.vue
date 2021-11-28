@@ -2,25 +2,33 @@
   <div id="habit-wrapper" ref="wrap" @click="onClickOutside">
     <div id="habit-tracker" ref="div" v-if="visible" :style="style">
       <div id="toolbar">
-        <button @click="toggleSettings" title="Open Settings">⚙️</button>
-        <button @click="downloadAsCSV" title="Download habits as CSV">🔽</button>
+        <button @click.stop="toggleSettings" title="Open Settings">⚙️</button>
+        <button @click.stop="downloadAsCSV" title="Download habits as CSV">🔽</button>
       </div>
       <div id="settings" v-show="gear">
         <div>
-          <label>Habit marker: <input class="m" type="text" :placeholder="defaults.habitText" :value="habitText" @change="(e)=>set('habitText', e.target.value)" /></label>
+          <label>Habit marker: <input class="m" type="text" :placeholder="defaults.habitText" :value="habitText" @change="(e)=>{set('habitText', e.target.value); updateHabits()}" /></label>
+          <label>Habit pattern: <input class="l" type="text" :placeholder="defaults.habitPattern" :value="habitPattern" @change="(e)=>{set('habitPattern', e.target.value); updateHabits()}" /></label>
           <label>Date <a href="https://day.js.org/docs/en/display/format" target="_blank" title="'\n' adds a new line. View syntax ->">format</a>:
             <input class="m" type="text" :placeholder="defaults.dateFormat" :value="dateFormat" @change="(e)=>set('dateFormat', e.target.value)" />
           </label>
         </div>
         <div>
-          <label>Habit pattern: <input class="l" type="text" :placeholder="defaults.habitPattern" :value="habitPattern" @change="(e)=>set('habitPattern', e.target.value)" /></label>
+          <div id="color-groups">
+            <label>Color Groups: <button @click.stop="addColor()" title="Add Color">+</button></label>
+            <span class="color-group" v-for="(c,i) in colors" :key="i">
+              <input type="color" :value="c" title="Set Color" @change="(e)=>modifyColor(i,e.target.value)">
+              <button @click.stop="deleteColor(i)" title="Delete Color">-</button>
+            </span>
+          </div>
           <label>Date <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/width#syntax" target="_blank" title="CSS width property. View syntax ->">width</a>:
-            <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth" @change="(e)=>{set('dateWidth', e.target.value)}" />
+            <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth" @change="(e)=>set('dateWidth', e.target.value)" />
           </label>
         </div>
       </div>
       <table>
         <tr>
+          <th v-show="gear">Color<br>Group</th>
           <th v-show="gear">Order</th>
           <th v-show="gear">Hidden</th>
           <th class="streak">Longest<br>Streak</th>
@@ -31,7 +39,13 @@
             {{ d.format((dateFormat || defaults.dateFormat).replaceAll('\\n', '\n')) }}
           </th>
         </tr>
-        <tr v-show="gear || !h.hidden" v-for="(h,idx) in habits" :key="h">
+        <tr v-show="gear || !h.hidden" v-for="(h,idx) in habits" :key="h" :style="{color: colors[h.color]}">
+          <td v-show="gear">
+            <select class="color" :value="h.color" @change="(e)=>setHabitProp(h, 'color', e.target.value)">
+              <option></option>
+              <option v-for="(c,i) in colors" :key="i" :style="{color: c}">{{i}}</option>
+            </select>
+          </td>
           <td v-show="gear">
             <button class="up" @click="move(idx,-1)">&lt;</button>
             <button class="down" @click="move(idx,1)">&lt;</button>
@@ -124,13 +138,25 @@ export default {
       minDay: minDate,
       startDay: minDate,
       maxDay: today,
-      startIndex: 0
+      startIndex: 0,
+      colors: []
     }
   },
+  //computed() {
+  //  function color(habit) { return {color: this.colors[habit.color] } }
+  //},
   async mounted () {
     const appUserConfig = await logseq.App.getUserConfigs();
     this.setTheme({mode: appUserConfig.preferredThemeMode});
     logseq.App.onThemeModeChanged(this.setTheme);
+    
+    const s = logseq.settings;
+    this.habitText = s.habitText;
+    this.habitPattern = s.habitPattern;
+    this.dateFormat = s.dateFormat;
+    this.dateWidth = s.dateWidth;
+    this.colors = s.colors || [];
+
     logseq.on('ui:visible:changed', async ({ visible }) => {
       if (visible) {
         this.visible = visible;
@@ -187,9 +213,11 @@ export default {
       } catch { }
     },
     async set(key,val) {
+      this[key] = val;
       await logseq.updateSettings({[key]: val})
     },
     async setHabitProp(h,prop,val) {
+      h[prop] = val;
       await logseq.updateSettings({habits: {[h.habit]: {[prop]: val}} })
     },
     async getHabits() {
@@ -211,9 +239,10 @@ export default {
                (not [(re-matches ?pre ?c)])) )
          [?b :block/page ?page]
          [?page :block/journal?]
+         [?page :block/journal-day ?d]
       `;
       let H = {};
-      const start = await logseq.DB.datascriptQuery(`[:find (min ?d) ${query} [?page :block/journal-day ?d]]`);
+      const start = await logseq.DB.datascriptQuery(`[:find (min ?d) ${query}]`);
       if (!start) return H;
 
       this.minDay = toDayjs(start[0]);
@@ -239,12 +268,33 @@ export default {
           period: t?.period ? getPeriod(t.period) : null,
           periodText: t ? t.period : "",
           hidden: t?.hidden,
-          order: t?.order
+          order: t?.order,
+          color: t?.color
         };
         H[habit].track[toIndex(toDayjs(h[0].page['journal-day']), this.minDayToCheck)] += count;
       } 
 
       return H;
+    },
+    async addColor() {
+      this.colors.push("#cccccc");
+      await this.setColors();
+    },
+    async deleteColor(i) {
+      this.habits.map(async h => {
+        if (h.color > i) await this.setHabitProp(h, 'color', --h.color);
+        else if (h.color == i) await this.setHabitProp(h, 'color', h.color=undefined);
+      });
+      this.colors.splice(i,1);
+      await this.setColors();
+    },
+    async modifyColor(i, color) {
+      this.colors[i] = color;
+      await this.setColors();
+    },
+    async setColors() {
+      await logseq.updateSettings({'colors': null});
+      await logseq.updateSettings({'colors': Array.from(this.colors)});
     },
     async move(from, delta) {
       const to = from + delta;
@@ -274,12 +324,6 @@ export default {
       this.dates = [...Array(this.dayRange)].map((_,i) => this.startDay.add(i,'d'));
     },
     async updateHabits () {
-      const s = logseq.settings;
-      this.habitText = s.habitText;
-      this.habitPattern = s.habitPattern;
-      this.dateFormat = s.dateFormat;
-      this.dateWidth = s.dateWidth;
-
       let habits = await this.getHabits()
       for (let h of Object.values(habits)) {
         if (h.period != null) {
