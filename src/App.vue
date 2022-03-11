@@ -27,6 +27,10 @@
               <button @click.stop="deleteColor(i)" title="Delete Color">-</button>
             </span>
           </div>
+          <label>
+            <input type="checkbox" :checked="hideStreak" @change="(e)=>set('hideStreak', e.target.checked)" />
+            Hide streak
+          </label>
         </div>
       </div>
       <table>
@@ -34,8 +38,8 @@
           <th v-show="gear">Color<br>Group</th>
           <th v-show="gear">Order</th>
           <th v-show="gear">Hidden</th>
-          <th class="streak">Longest<br>Streak</th>
-          <th class="streak">Current<br>Streak</th>
+          <th v-show="gear || !hideStreak" class="streak">Longest<br>Streak</th>
+          <th v-show="gear || !hideStreak" class="streak">Current<br>Streak</th>
           <th class="period">Frequency <br>/ Period</th>
           <th>Habits <button @click="prev">&lt;</button><button @click="next">&gt;</button></th>
           <th v-for="(d,i) in dates" :key="d" :style="{width: dateWidth || defaults.dateWidth}" :class="['track', ['0','6'].includes(d.format('d')) ? 'weekend' : '']" @click="openJournal(i)">
@@ -54,8 +58,8 @@
             <button class="down" @click="move(idx,1)">&lt;</button>
           </td>
           <td v-show="gear" class="hidden"><input type="checkbox" :checked="h.hidden" @change="(e)=>setHabitProp(h, 'hidden', e.target.checked)"/></td>
-          <td class="streak">{{ h.longestStreak }}</td>
-          <td class="streak">{{ h.streak }}</td>
+          <td v-show="gear || !hideStreak" class="streak">{{ h.longestStreak }}</td>
+          <td v-show="gear || !hideStreak" class="streak">{{ h.streak }}</td>
           <td class="period"><input type="text" :value="h.periodText" @change="(e)=>{setHabitProp(h, 'period', e.target.value); updateHabits()}"/></td>
           <td class="habit">{{ h.habit }}</td>
           <td v-for="(v,i) in h.track.slice(startIndex, startIndex+dayRange)" :key="i" :class="['track', 'result' in h ? success[h.result[startIndex+i]] : '']" @click="openJournal(i)">
@@ -137,6 +141,7 @@ export default {
       ignorePattern: "",
       dateFormat: "",
       dateWidth: "",
+      hideStreak: false,
       habits: [],
       dates: [],
       dayRange: days,
@@ -161,6 +166,7 @@ export default {
     this.ignorePattern = s.ignorePattern;
     this.dateFormat = s.dateFormat;
     this.dateWidth = s.dateWidth;
+    this.hideStreak = s.hideStreak;
     this.colors = s.colors || [];
 
     logseq.on('ui:visible:changed', async ({ visible }) => {
