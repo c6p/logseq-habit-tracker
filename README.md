@@ -41,6 +41,15 @@ pushups #habit did 10 more than usual today, go me!
 ```
 Habit pattern: `((\d{2}:\d{2})|())(?<habit>.*#habit(\s|\b))`
 
+#### Example 2
+Ignore habits with unfinished marker. See #10
+```
+- #habit
+  - qwer - 1,2
+  - qwe
+  - qwert - X 
+```
+Ignore pattern: `.*- X` will ignore habit `qwert`
 
 ### Running the Plugin
 

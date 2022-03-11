@@ -8,10 +8,16 @@
       <div id="settings" v-show="gear">
         <div>
           <label>Habit marker: <input class="m" type="text" :placeholder="defaults.habitText" :value="habitText" @change="(e)=>{set('habitText', e.target.value); updateHabits()}" /></label>
-          <label>Habit pattern: <input class="l" type="text" :placeholder="defaults.habitPattern" :value="habitPattern" @change="(e)=>{set('habitPattern', e.target.value); updateHabits()}" /></label>
           <label>Date <a href="https://day.js.org/docs/en/display/format" target="_blank" title="'\n' adds a new line. View syntax ->">format</a>:
             <input class="m" type="text" :placeholder="defaults.dateFormat" :value="dateFormat" @change="(e)=>set('dateFormat', e.target.value)" />
           </label>
+          <label>Date <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/width#syntax" target="_blank" title="CSS width property. View syntax ->">width</a>:
+            <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth" @change="(e)=>set('dateWidth', e.target.value)" />
+          </label>
+        </div>
+        <div>
+          <label>Habit pattern: <input class="l" type="text" :placeholder="defaults.habitPattern" :value="habitPattern" @change="(e)=>{set('habitPattern', e.target.value); updateHabits()}" /></label>
+          <label>Ignore pattern: <input class="l" type="text" :placeholder="defaults.ignorePattern" :value="ignorePattern" @change="(e)=>{set('ignorePattern', e.target.value); updateHabits()}" /></label>
         </div>
         <div>
           <div id="color-groups">
@@ -21,9 +27,6 @@
               <button @click.stop="deleteColor(i)" title="Delete Color">-</button>
             </span>
           </div>
-          <label>Date <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/width#syntax" target="_blank" title="CSS width property. View syntax ->">width</a>:
-            <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth" @change="(e)=>set('dateWidth', e.target.value)" />
-          </label>
         </div>
       </div>
       <table>
@@ -125,11 +128,13 @@ export default {
       defaults:  {
         habitText: "#habit",
         habitPattern: String.raw`^(?<habit>.*?)(?:| - (?<count>.*?))$`,
+        ignorePattern: "",
         dateFormat: String.raw`D.M\ndd`,
         dateWidth: "3em",
       },
       habitText: "",
       habitPattern: "",
+      ignorePattern: "",
       dateFormat: "",
       dateWidth: "",
       habits: [],
@@ -153,6 +158,7 @@ export default {
     const s = logseq.settings;
     this.habitText = s.habitText;
     this.habitPattern = s.habitPattern;
+    this.ignorePattern = s.ignorePattern;
     this.dateFormat = s.dateFormat;
     this.dateWidth = s.dateWidth;
     this.colors = s.colors || [];
@@ -225,8 +231,12 @@ export default {
       const re = new RegExp(this.habitPattern || this.defaults.habitPattern, 'm');
       const habitText = this.habitText || this.defaults.habitText;
       const habitMarker = escapeRegExp(habitText);
+      const ignorePattern = this.ignorePattern || this.defaults.ignorePattern;
       const query = `
          :where
+         [?b :block/page ?page]
+         [?page :block/journal?]
+         [?page :block/journal-day ?d]
          (or-join [?b]
           (and [?b :block/parent ?p]
                [?p :block/content ?pc]
@@ -236,11 +246,17 @@ export default {
                [(re-pattern "(^| )${habitMarker}( |$)") ?re]
                [(re-find ?re ?c)]
                [(re-pattern " *?${habitMarker} *?\\n?") ?pre]
-               (not [(re-matches ?pre ?c)])) )
-         [?b :block/page ?page]
-         [?page :block/journal?]
-         [?page :block/journal-day ?d]
-      `;
+               (not [(re-matches ?pre ?c)])
+               ) )` +
+      (ignorePattern
+      ? `(not-join [?b]
+          [?b :block/content ?c]
+          [(re-pattern "${ignorePattern}\\n?") ?ire]
+          [(re-matches ?ire ?c)] )`
+      : "");
+               //[(re-pattern "${ip}") ?ire]
+               //(not [(re-matches ?ire ?c)])
+      console.warn(query)
       let H = {};
       const start = await logseq.DB.datascriptQuery(`[:find (min ?d) ${query}]`);
       if (!start) return H;
