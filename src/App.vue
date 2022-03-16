@@ -260,9 +260,6 @@ export default {
           [(re-pattern "${ignorePattern}\\n?") ?ire]
           [(re-matches ?ire ?c)] )`
       : "");
-               //[(re-pattern "${ip}") ?ire]
-               //(not [(re-matches ?ire ?c)])
-      console.warn(query)
       let H = {};
       const start = await logseq.DB.datascriptQuery(`[:find (min ?d) ${query}]`);
       if (!start) return H;
