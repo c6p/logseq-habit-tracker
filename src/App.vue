@@ -243,15 +243,14 @@ export default {
          [?b :block/page ?page]
          [?page :block/journal?]
          [?page :block/journal-day ?d]
-         (or-join [?b]
+         [(re-pattern "(?s) *?${habitMarker} *?\\n?(:PROPERTIES:.*?:END:\\n)?") ?pre]
+         (or-join [?b ?pre]
           (and [?b :block/parent ?p]
                [?p :block/content ?pc]
-               [(re-pattern " *?${habitMarker} *?\\n?") ?pre]
                [(re-matches ?pre ?pc)])
           (and [?b :block/content ?c]
                [(re-pattern "(^| )${habitMarker}( |$)") ?re]
                [(re-find ?re ?c)]
-               [(re-pattern " *?${habitMarker} *?\\n?") ?pre]
                (not [(re-matches ?pre ?c)])
                ) )` +
       (ignorePattern
