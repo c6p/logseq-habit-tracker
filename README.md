@@ -1,3 +1,5 @@
+> If you like this plugin, you can [buy me a ☕ here](https://www.buymeacoffee.com/c.6p)
+
 # Logseq Habit Tracker
 ![image](https://user-images.githubusercontent.com/80478/141788606-44566dfe-bbf7-4272-a3ea-5a9a48eba313.png)
 ![image](https://user-images.githubusercontent.com/80478/141792679-3c164eab-be20-4c2f-a4fe-757676c3b4c7.png)
