@@ -10,9 +10,10 @@ Click on gear (⚙️) icon to edit settings.
 * **Habit marker** is a keyword to match habits: `#habit`, it was `Habits` before v0.2.0
 * **Habit pattern** is the [regex](https://regex101.com/) to parse habits. See [Customization](#customization) for more examples.  
   Default format is `Habit text - 1,2,3` and you can add notes after a new line. 
-  `^(?<habit>.*?)(?:| - (?<count>.*?))$`  
+  `^(?<habit>.*?)(?:| - (?:(?<int>\d*?) times|(?<count>.*?)))$`  
   * **habit** is the identifier for the habit and
   * **count** is comma separated list of things (e.g. numbers, time)
+  * **int** is integer count in special format. i.e `5 times`
 * **Date [format](https://day.js.org/docs/en/display/format)**: `D.M\ndd` where `\n` is new line.
 * **Date [width](https://developer.mozilla.org/en-US/docs/Web/CSS/width#syntax)**: `2em`
 

@@ -29,8 +29,9 @@ html, body {
 a { color: var(--color); }
 #settings div { display: flex; justify-content: space-between; margin-bottom: .5em; padding: 0 1em; }
 input[type=text] { background: var(--input); color: var(--color); width: 5em; text-align: center; }
-input.m { width: 10em }
-input.l { width: 20em }
+input.s { width: 10em }
+input.m { width: 20em }
+input.l { width: 30em }
 th { font-size: 70%; padding: .5em 0; }
 .hidden, .hidden input { width: 1em; text-align: center; }
 .habit { min-width: 10em; white-space: nowrap; }
