@@ -57,3 +57,6 @@ Ignore pattern: `.*- X` will ignore habit `qwert`
 
 - `yarn && yarn build` in terminal to install dependencies.
 - `Load unpacked plugin` in Logseq Desktop client.
+
+### Attribution
+- Icon: https://www.iconfinder.com/icons/8674458/ic_fluent_clipboard_pulse_regular_icon
