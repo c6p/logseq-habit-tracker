@@ -4,12 +4,14 @@ specifiers:
   '@logseq/libs': ^0.0.6
   '@vitejs/plugin-vue': ^2.3.3
   dayjs: ^1.11.2
+  prettier: ^2.6.2
   vite: 2.9.9
   vue: ^3.2.33
 
 dependencies:
   '@logseq/libs': 0.0.6
   dayjs: 1.11.2
+  prettier: 2.6.2
   vue: 3.2.33
 
 devDependencies:
@@ -470,6 +472,12 @@ packages:
       nanoid: 3.3.4
       picocolors: 1.0.0
       source-map-js: 1.0.2
+
+  /prettier/2.6.2:
+    resolution: {integrity: sha512-PkUpF+qoXTqhOeWL9fu7As8LXsIUZ1WYaJiY/a7McAQzxjk82OF0tibkFXVCDImZtWxbvojFjerkiLb0/q8mew==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
+    dev: false
 
   /process/0.11.10:
     resolution: {integrity: sha1-czIwDoQBYb2j5podHZGn1LwW8YI=}

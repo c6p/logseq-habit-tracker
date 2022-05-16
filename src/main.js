@@ -1,21 +1,21 @@
-import '@logseq/libs';
-import { createApp } from 'vue';
-import App from './App.vue';
-import './index.css'
-import Font from "./icomoon.woff";
+import "@logseq/libs";
+import { createApp } from "vue";
+import App from "./App.vue";
+import "./index.css";
+import Font from "./icon.woff";
 
 function createModel() {
   return {
     show(_) {
-      logseq.showMainUI()
+      logseq.showMainUI();
     },
-  }
+  };
 }
 
 function main() {
   logseq.setMainUIInlineStyle({
     zIndex: 11,
-  })
+  });
 
   logseq.provideStyle(String.raw`
     @font-face {
@@ -40,16 +40,16 @@ function main() {
     i.icon-habit-tracker:before {
       content: "\e900";
     }
-  `)
+  `);
 
-  logseq.App.registerUIItem('toolbar', {
-    key: 'show-habits',
+  logseq.App.registerUIItem("toolbar", {
+    key: "show-habits",
     template: `<a data-on-click="show" title="Habits" class="button">
     <i class="icon-habit-tracker"></i>
     </a>`,
-  })
+  });
 
-  createApp(App).mount('#app');
+  createApp(App).mount("#app");
 }
 
 // bootstrap
