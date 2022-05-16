@@ -40,6 +40,7 @@
           <th v-show="gear">Hidden</th>
           <th v-show="gear || !hideStreak" class="streak">Longest<br>Streak</th>
           <th v-show="gear || !hideStreak" class="streak">Current<br>Streak</th>
+          <th v-show="gear">At<br>Most</th>
           <th class="period">Frequency <br>/ Period</th>
           <th>Habits <button @click="prev">&lt;</button><button @click="next">&gt;</button></th>
           <th v-for="(d,i) in dates" :key="d" :style="{width: dateWidth || defaults.dateWidth}" :class="['track', ['0','6'].includes(d.format('d')) ? 'weekend' : '']" @click="openJournal(i)">
@@ -60,6 +61,7 @@
           <td v-show="gear" class="hidden"><input type="checkbox" :checked="h.hidden" @change="(e)=>setHabitProp(h, 'hidden', e.target.checked)"/></td>
           <td v-show="gear || !hideStreak" class="streak">{{ h.longestStreak }}</td>
           <td v-show="gear || !hideStreak" class="streak">{{ h.streak }}</td>
+          <td v-show="gear" class="atmost"><input type="checkbox" :checked="h.atmost" @change="(e)=>setHabitProp(h, 'atmost', e.target.checked)"/></td>
           <td class="period"><input type="text" :value="h.periodText" @change="(e)=>{setHabitProp(h, 'period', e.target.value); updateHabits()}"/></td>
           <td class="habit">{{ h.habit }}</td>
           <td v-for="(v,i) in h.track.slice(startIndex, startIndex+dayRange)" :key="i" :class="['track', 'result' in h ? success[h.result[startIndex+i]] : '']" @click="openJournal(i)">
@@ -287,6 +289,7 @@ export default {
           period: t?.period ? getPeriod(t.period) : null,
           periodText: t ? t.period : "",
           hidden: t?.hidden,
+          atmost: t?.atmost,
           order: t?.order,
           color: t?.color
         };
@@ -348,9 +351,12 @@ export default {
         if (h.period != null) {
           const {times, multi, timeframe} = h.period;
           // check previous habit performance
-          h.result = h.track.map((_,i) => times <= h.track.slice(
-            getPeriodStart(this.minDayToCheck.add(i+1, 'day'), multi, timeframe).diff(this.minDayToCheck, 'day'), i+1)
-            .reduce((a, b) => a + b, 0));
+          h.result = h.track.map((_,i) => {
+            const count = h.track.slice(
+              getPeriodStart(this.minDayToCheck.add(i+1, 'day'), multi, timeframe).diff(this.minDayToCheck, 'day'), i+1)
+              .reduce((a, b) => a + b, 0);
+            return h.atmost ? times >= count : times <= count;
+          });
           h.streak = h.longestStreak = 0;
           for (const v of h.result) {
             if (v)

@@ -31,7 +31,7 @@ a { color: var(--color); }
 input[type=text] { background: var(--input); color: var(--color); width: 5em; text-align: center; }
 input.s { width: 10em }
 input.m { width: 20em }
-input.l { width: 30em }
+input.l { width: 40em }
 th { font-size: 70%; padding: .5em 0; }
 .hidden, .hidden input { width: 1em; text-align: center; }
 .habit { min-width: 10em; white-space: nowrap; }
