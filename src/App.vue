@@ -133,8 +133,8 @@ export default {
       success: {true:"success", false: "failure"},
       defaults:  {
         habitText: "#habit",
-        habitPattern: String.raw`^(?<habit>.*?)(?:| - (?:(?<int>\d*?) times|(?<count>.*?)))$`,
-        ignorePattern: "",
+        habitPattern: String.raw`^(TODO|DONE)?\s*(?<habit>.*?)(?:| - (?:(?<int>\d*?) times|(?<count>.*?)))$`,
+        ignorePattern: String.raw`TODO .*`,
         dateFormat: String.raw`D.M\ndd`,
         dateWidth: "3em",
       },
