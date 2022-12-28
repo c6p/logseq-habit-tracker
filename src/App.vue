@@ -20,6 +20,7 @@
                 (e) => {
                   set('habitText', e.target.value);
                   updateHabits();
+                  toLast();
                 }
               "
           /></label>
@@ -203,15 +204,12 @@
           </td>
           <td class="habit">{{ h.habit }}</td>
           <td
-            v-for="(v, i) in h.track.slice(startIndex, startIndex + dayRange)"
+            v-for="([t, s], i) in track[idx]"
             :key="i"
-            :class="[
-              'track',
-              'result' in h ? success[h.result[startIndex + i]] : '',
-            ]"
+            :class="['track', s]"
             @click="openJournal(i)"
           >
-            {{ v > 0 ? v : "" }}
+            {{ t > 0 ? t : "" }}
           </td>
         </tr>
       </table>
@@ -260,7 +258,7 @@ function downloadBlob(
   const blob = new Blob([content], { type: contentType });
   const url = URL.createObjectURL(blob);
 
-  let a = document.createElement("a");
+  const a = document.createElement("a");
   a.href = url;
   a.setAttribute("download", filename);
   a.click();
@@ -270,6 +268,7 @@ function downloadBlob(
 const today = dayjs().startOf("day");
 const days = 14;
 const minDate = today.subtract(days - 1, "day");
+const [SUCCESS, FAILURE] = ["success", "failure"];
 
 export default {
   name: "App",
@@ -279,7 +278,6 @@ export default {
       visible: false,
       gear: false,
       style: {},
-      success: { true: "success", false: "failure" },
       defaults: {
         habitText: "#habit",
         habitPattern: String.raw`^(TODO|DONE)?\s*(?<habit>.*?)(?:| - (?:(?<int>\d*?) times|(?<count>.*?)))$`,
@@ -303,22 +301,53 @@ export default {
       colors: [],
     };
   },
-  //computed() {
-  //  function color(habit) { return {color: this.colors[habit.color] } }
-  //},
+  computed: {
+    track() {
+      const [si, dr] = [this.startIndex, this.dayRange];
+      const zip = (a, b) => a.map((k, i) => [k, b[i]]);
+      return this.habits.map((habit) => {
+        if (si >= 0) {
+          const track = habit.track?.slice(si, si + dr) ?? [];
+          const result = habit?.result?.slice(si, si + dr) ?? [];
+          return zip(
+            track.concat(Array(dr - track.length).fill(0)),
+            result.concat(Array(dr - result.length).fill(""))
+          );
+        } else {
+          const track = habit.track ?? [];
+          const result = habit?.result ?? [];
+          return zip(
+            Array(-si)
+              .fill(0)
+              .concat(track ?? Array(dr + si - track.length).fill(0)),
+            Array(-si)
+              .fill("")
+              .concat(result ?? Array(dr + si - result.length).fill(""))
+          );
+        }
+      });
+    },
+  },
   async mounted() {
     const appUserConfig = await logseq.App.getUserConfigs();
     this.setTheme({ mode: appUserConfig.preferredThemeMode });
     logseq.App.onThemeModeChanged(this.setTheme);
 
-    const s = logseq.settings;
-    this.habitText = s.habitText;
-    this.habitPattern = s.habitPattern;
-    this.ignorePattern = s.ignorePattern;
-    this.dateFormat = s.dateFormat;
-    this.dateWidth = s.dateWidth;
-    this.hideStreak = s.hideStreak;
-    this.colors = s.colors || [];
+    Object.assign(
+      this,
+      Object.fromEntries(
+        [
+          "habitText",
+          "habitPattern",
+          "ignorePattern",
+          "dateFormat",
+          "dateWidth",
+          "hideStreak",
+          "colors",
+        ].map((key) => [key, logseq.settings[key]])
+      )
+    );
+    this.colors = this.colors ?? [];
 
     logseq.on("ui:visible:changed", async ({ visible }) => {
       if (visible) {
@@ -336,15 +365,15 @@ export default {
     },
     setTheme({ mode }) {
       // read theme colors
-      let background = mode === "dark" ? "#433f38" : "rgb(255 255 255 / 90%)";
-      let color = mode === "dark" ? "#f8f8f8" : "rgb(55, 60, 63)";
-      let input = mode === "dark" ? "rgb(47, 52, 55)" : "#fff";
-      //try {
+      const background = mode === "dark" ? "#433f38" : "rgb(255 255 255 / 90%)";
+      const color = mode === "dark" ? "#f8f8f8" : "rgb(55, 60, 63)";
+      const input = mode === "dark" ? "rgb(47, 52, 55)" : "#fff";
+      // try {
       //  const s = getComputedStyle(window.parent.document.documentElement);
       //  background = s.getPropertyValue('--ls-primary-background-color');
       //  color = s.getPropertyValue('--ls-primary-text-color');
       //  input = s.getPropertyValue('--ls-secondary-background-color');
-      //} catch (_) { }
+      // } catch (_) { }
       this.style = Object.assign(this.style, {
         "--background": background,
         "--color": color,
@@ -392,8 +421,7 @@ export default {
       const habitMarker = escapeRegExp(habitText);
       const ignorePattern = this.ignorePattern || this.defaults.ignorePattern;
       const query =
-        `
-         :where
+        `:where
          [?b :block/page ?page]
          [?page :block/journal?]
          [?page :block/journal-day ?d]
@@ -413,12 +441,14 @@ export default {
           [(re-pattern "${ignorePattern}\\n?") ?ire]
           [(re-matches ?ire ?c)] )`
           : "");
-      let H = {};
+      const H = {};
       const start = await logseq.DB.datascriptQuery(
         `[:find (min ?d) ${query}]`
       );
-      if (!start) return H;
-
+      if (!start || start.length === 0) {
+        this.minDay = minDate;
+        return H;
+      }
       this.minDay = toDayjs(start[0]);
       const habits = await logseq.DB.datascriptQuery(
         `[:find (pull ?b [:block/content {:block/page [:block/journal-day]}]) ${query} ]`
@@ -438,7 +468,7 @@ export default {
         count =
           typeof count !== "undefined"
             ? count.split(",").length
-            : typeof int != "undefined"
+            : typeof int !== "undefined"
             ? parseInt(int)
             : 1;
         const t = habitSettings(s)[habit];
@@ -466,8 +496,9 @@ export default {
     async deleteColor(i) {
       this.habits.map(async (h) => {
         if (h.color > i) await this.setHabitProp(h, "color", --h.color);
-        else if (h.color == i)
+        else if (h.color === i) {
           await this.setHabitProp(h, "color", (h.color = undefined));
+        }
       });
       this.colors.splice(i, 1);
       await this.setColors();
@@ -491,9 +522,9 @@ export default {
       await this.setHabitProp(this.habits[to], "order", to);
     },
     prev() {
-      this.startDay = dayjs.max(
-        this.startDay.subtract(this.dayRange, "day"),
-        this.minDay
+      this.startDay = dayjs.min(
+        this.startDay,
+        dayjs.max(this.startDay.subtract(this.dayRange, "day"), this.minDay)
       );
       this.update();
     },
@@ -519,8 +550,8 @@ export default {
       );
     },
     async updateHabits() {
-      let habits = await this.getHabits();
-      for (let h of Object.values(habits)) {
+      const habits = await this.getHabits();
+      for (const h of Object.values(habits)) {
         if (h.period != null) {
           const { times, multi, timeframe } = h.period;
           // check previous habit performance
@@ -535,11 +566,13 @@ export default {
                 i + 1
               )
               .reduce((a, b) => a + b, 0);
-            return h.atmost ? times >= count : times <= count;
+            return (h.atmost ? times >= count : times <= count)
+              ? SUCCESS
+              : FAILURE;
           });
           h.streak = h.longestStreak = 0;
           for (const v of h.result) {
-            if (v) h.streak++;
+            if (v === SUCCESS) h.streak++;
             else {
               h.longestStreak = Math.max(h.longestStreak, h.streak);
               h.streak = 0;
