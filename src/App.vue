@@ -280,8 +280,8 @@ export default {
       style: {},
       defaults: {
         habitText: "#habit",
-        habitPattern: String.raw`^(TODO|DONE)?\s*(?<habit>.*?)(?:| - (?:(?<int>\d*?) times|(?<count>.*?)))$`,
-        ignorePattern: String.raw`TODO .*`,
+        habitPattern: String.raw`^([#*]*\s)?(TODO|DONE)?\s*?(?<habit>.*?)(?:| - (?:(?<int>\d*?) times|(?<count>.*?)))$`,
+        ignorePattern: String.raw`TODO (.|\n)*`,
         dateFormat: String.raw`D.M\ndd`,
         dateWidth: "3em",
       },
