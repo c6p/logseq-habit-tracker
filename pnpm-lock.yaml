@@ -1,5 +1,9 @@
 lockfileVersion: '6.0'
 
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
 dependencies:
   '@logseq/libs':
     specifier: ^0.0.6
@@ -17,10 +21,10 @@ dependencies:
 devDependencies:
   '@vitejs/plugin-vue':
     specifier: ^2.3.3
-    version: 2.3.3(vite@2.9.9)(vue@3.2.33)
+    version: 2.3.3(vite@2.9.16)(vue@3.2.33)
   vite:
-    specifier: 2.9.9
-    version: 2.9.9
+    specifier: 2.9.16
+    version: 2.9.16
 
 packages:
 
@@ -62,14 +66,14 @@ packages:
       - supports-color
     dev: false
 
-  /@vitejs/plugin-vue@2.3.3(vite@2.9.9)(vue@3.2.33):
+  /@vitejs/plugin-vue@2.3.3(vite@2.9.16)(vue@3.2.33):
     resolution: {integrity: sha512-SmQLDyhz+6lGJhPELsBdzXGc+AcaT8stgkbiTFGpXPe8Tl1tJaBw1A6pxDqDuRsVkD8uscrkx3hA7QDOoKYtyw==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
       vite: ^2.5.10
       vue: ^3.2.25
     dependencies:
-      vite: 2.9.9
+      vite: 2.9.16
       vue: 3.2.33
     dev: true
 
@@ -546,8 +550,8 @@ packages:
       inherits: 2.0.3
     dev: false
 
-  /vite@2.9.9:
-    resolution: {integrity: sha512-ffaam+NgHfbEmfw/Vuh6BHKKlI/XIAhxE5QSS7gFLIngxg171mg1P3a4LSRME0z2ZU1ScxoKzphkipcYwSD5Ew==}
+  /vite@2.9.16:
+    resolution: {integrity: sha512-X+6q8KPyeuBvTQV8AVSnKDvXoBMnTx8zxh54sOwmmuOdxkjMmEJXH2UEchA+vTMps1xw9vL64uwJOWryULg7nA==}
     engines: {node: '>=12.2.0'}
     hasBin: true
     peerDependencies:
