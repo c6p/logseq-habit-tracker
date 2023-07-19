@@ -9,109 +9,55 @@
       </div>
       <div id="settings" v-show="gear">
         <div>
-          <label
-            >Habit marker:
-            <input
-              class="s"
-              type="text"
-              :placeholder="defaults.habitText"
-              :value="habitText"
-              @change="
-                (e) => {
-                  set('habitText', e.target.value);
-                  updateHabits();
-                  toLast();
-                }
-              "
-          /></label>
-          <label
-            >Date
-            <a
-              href="https://day.js.org/docs/en/display/format"
-              target="_blank"
-              title="'\n' adds a new line. View syntax ->"
-              >format</a
-            >:
-            <input
-              class="s"
-              type="text"
-              :placeholder="defaults.dateFormat"
-              :value="dateFormat"
-              @change="(e) => set('dateFormat', e.target.value)"
-            />
+          <label>Habit marker:
+            <input class="m" type="text" :placeholder="defaults.habitText" :value="habitText" @change="(e) => {
+              set('habitText', e.target.value);
+              updateHabits();
+              toLast();
+            }
+              " /></label>
+          <label>Date
+            <a href="https://day.js.org/docs/en/display/format" target="_blank"
+              title="'\n' adds a new line. View syntax ->">format</a>:
+            <input class="s" type="text" :placeholder="defaults.dateFormat" :value="dateFormat"
+              @change="(e) => set('dateFormat', e.target.value)" />
           </label>
-          <label
-            >Date
-            <a
-              href="https://developer.mozilla.org/en-US/docs/Web/CSS/width#syntax"
-              target="_blank"
-              title="CSS width property. View syntax ->"
-              >width</a
-            >:
-            <input
-              type="text"
-              :placeholder="defaults.dateWidth"
-              :value="dateWidth"
-              @change="(e) => set('dateWidth', e.target.value)"
-            />
+          <label>Date
+            <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/width#syntax" target="_blank"
+              title="CSS width property. View syntax ->">width</a>:
+            <input type="text" :placeholder="defaults.dateWidth" :value="dateWidth"
+              @change="(e) => set('dateWidth', e.target.value)" />
           </label>
         </div>
         <div>
-          <label
-            >Habit pattern:
-            <input
-              class="l"
-              type="text"
-              :placeholder="defaults.habitPattern"
-              :value="habitPattern"
-              @change="
-                (e) => {
-                  set('habitPattern', e.target.value);
-                  updateHabits();
-                }
-              "
-          /></label>
-          <label
-            >Ignore pattern:
-            <input
-              class="m"
-              type="text"
-              :placeholder="defaults.ignorePattern"
-              :value="ignorePattern"
-              @change="
-                (e) => {
-                  set('ignorePattern', e.target.value);
-                  updateHabits();
-                }
-              "
-          /></label>
+          <label>Habit pattern:
+            <input class="l" type="text" :placeholder="defaults.habitPattern" :value="habitPattern" @change="(e) => {
+              set('habitPattern', e.target.value);
+              updateHabits();
+            }
+              " /></label>
+          <label>Ignore pattern:
+            <input class="m" type="text" :placeholder="defaults.ignorePattern" :value="ignorePattern" @change="(e) => {
+              set('ignorePattern', e.target.value);
+              updateHabits();
+            }
+              " /></label>
         </div>
         <div>
           <div id="color-groups">
-            <label
-              >Color Groups:
+            <label>Color Groups:
               <button @click.stop="addColor()" title="Add Color">
                 +
-              </button></label
-            >
+              </button></label>
             <span class="color-group" v-for="(c, i) in colors" :key="i">
-              <input
-                type="color"
-                :value="c"
-                title="Set Color"
-                @change="(e) => modifyColor(i, e.target.value)"
-              />
+              <input type="color" :value="c" title="Set Color" @change="(e) => modifyColor(i, e.target.value)" />
               <button @click.stop="deleteColor(i)" title="Delete Color">
                 -
               </button>
             </span>
           </div>
           <label>
-            <input
-              type="checkbox"
-              :checked="hideStreak"
-              @change="(e) => set('hideStreak', e.target.checked)"
-            />
+            <input type="checkbox" :checked="hideStreak" @change="(e) => set('hideStreak', e.target.checked)" />
             Hide streak
           </label>
         </div>
@@ -130,19 +76,12 @@
           <th v-show="gear">At<br />Most</th>
           <th class="period">Frequency <br />/ Period</th>
           <th>
-            Habits <button @click="prev">&lt;</button
-            ><button @click="next">&gt;</button>
+            Habits <button @click="prev">&lt;</button><button @click="next">&gt;</button>
           </th>
-          <th
-            v-for="(d, i) in dates"
-            :key="d"
-            :style="{ width: dateWidth || defaults.dateWidth }"
-            :class="[
-              'track',
-              ['0', '6'].includes(d.format('d')) ? 'weekend' : '',
-            ]"
-            @click="openJournal(i)"
-          >
+          <th v-for="(d, i) in dates" :key="d" :style="{ width: dateWidth || defaults.dateWidth }" :class="[
+            'track',
+            ['0', '6'].includes(d.format('d')) ? 'weekend' : '',
+          ]" @click="openJournal(i)">
             {{
               d.format(
                 (dateFormat || defaults.dateFormat).replaceAll("\\n", "\n")
@@ -150,18 +89,9 @@
             }}
           </th>
         </tr>
-        <tr
-          v-show="gear || !h.hidden"
-          v-for="(h, idx) in habits"
-          :key="h"
-          :style="{ color: colors[h.color] }"
-        >
+        <tr v-show="gear || !h.hidden" v-for="(h, idx) in habits" :key="h" :style="{ color: colors[h.color] }">
           <td v-show="gear">
-            <select
-              class="color"
-              :value="h.color"
-              @change="(e) => setHabitProp(h, 'color', e.target.value)"
-            >
+            <select class="color" :value="h.color" @change="(e) => setHabitProp(h, 'color', e.target.value)">
               <option></option>
               <option v-for="(c, i) in colors" :key="i" :style="{ color: c }">
                 {{ i }}
@@ -173,42 +103,24 @@
             <button class="down" @click="move(idx, 1)">&lt;</button>
           </td>
           <td v-show="gear" class="hidden">
-            <input
-              type="checkbox"
-              :checked="h.hidden"
-              @change="(e) => setHabitProp(h, 'hidden', e.target.checked)"
-            />
+            <input type="checkbox" :checked="h.hidden" @change="(e) => setHabitProp(h, 'hidden', e.target.checked)" />
           </td>
           <td v-show="gear || !hideStreak" class="streak">
             {{ h.longestStreak }}
           </td>
           <td v-show="gear || !hideStreak" class="streak">{{ h.streak }}</td>
           <td v-show="gear" class="atmost">
-            <input
-              type="checkbox"
-              :checked="h.atmost"
-              @change="(e) => setHabitProp(h, 'atmost', e.target.checked)"
-            />
+            <input type="checkbox" :checked="h.atmost" @change="(e) => setHabitProp(h, 'atmost', e.target.checked)" />
           </td>
           <td class="period">
-            <input
-              type="text"
-              :value="h.periodText"
-              @change="
-                (e) => {
-                  setHabitProp(h, 'period', e.target.value);
-                  updateHabits();
-                }
-              "
-            />
+            <input type="text" :value="h.periodText" @change="(e) => {
+              setHabitProp(h, 'period', e.target.value);
+              updateHabits();
+            }
+              " />
           </td>
           <td class="habit">{{ h.habit }}</td>
-          <td
-            v-for="([t, s], i) in track[idx]"
-            :key="i"
-            :class="['track', s]"
-            @click="openJournal(i)"
-          >
+          <td v-for="([t, s], i) in track[idx]" :key="i" :class="['track', s]" @click="openJournal(i)">
             {{ t > 0 ? t : "" }}
           </td>
         </tr>
@@ -237,8 +149,8 @@ function getPeriodStart(lastDay, multi, period) {
 function toIndex(day, startDay) {
   return day.diff(startDay, "day");
 }
-function escapeRegExp(string) {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\\\$&");
+function escapeBackslashes(string) {
+  return string.replaceAll("\\", String.raw`\\`);
 }
 function getPeriod(p) {
   const re = /(?<times>\d+)\s*\/\s*(?<multi>\d+)?(?<timeframe>[dwmy])/;
@@ -279,7 +191,7 @@ export default {
       gear: false,
       style: {},
       defaults: {
-        habitText: "#habit",
+        habitText: String.raw`(#|#?(\[\[))habit(\]\])?`,
         habitPattern: String.raw`^([#*]*\s)?(TODO|DONE)?\s*?(?<habit>.*?)(?:| - (?:(?<int>\d*?) times|(?<count>.*?)))$`,
         ignorePattern: String.raw`TODO (.|\n)*`,
         dateFormat: String.raw`D.M\ndd`,
@@ -401,7 +313,7 @@ export default {
       try {
         logseq.App.pushState("page", { name: day[0][0].name });
         logseq.hideMainUI();
-      } catch {}
+      } catch { }
     },
     async set(key, val) {
       this[key] = val;
@@ -418,7 +330,8 @@ export default {
         "m"
       );
       const habitText = this.habitText || this.defaults.habitText;
-      const habitMarker = escapeRegExp(habitText);
+      const habitMarker = escapeBackslashes(habitText);
+      const reText = new RegExp(habitText);
       const ignorePattern = this.ignorePattern || this.defaults.ignorePattern;
       const query =
         `:where
@@ -464,13 +377,13 @@ export default {
         const match = re.exec(h[0].content);
         if (!match) continue;
         let { habit, count, int } = match.groups;
-        habit = habit.replace(habitText, "").trim();
+        habit = habit.replace(reText, "").trim();
         count =
           typeof count !== "undefined"
             ? count.split(",").length
             : typeof int !== "undefined"
-            ? parseInt(int)
-            : 1;
+              ? parseInt(int)
+              : 1;
         const t = habitSettings(s)[habit];
         H[habit] = H[habit] || {
           habit,
@@ -593,8 +506,8 @@ export default {
         csv += `${this.minDayToCheck
           .add(i, "d")
           .format("YYYY-MM-DD")},${this.habits
-          .map((h) => h.track[i])
-          .join(",")}\r\n`;
+            .map((h) => h.track[i])
+            .join(",")}\r\n`;
       }
       downloadBlob(csv, "habits.csv", "text/csv;charset=utf-8;");
     },
