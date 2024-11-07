@@ -10,14 +10,14 @@
     "format": "prettier --write **/*.{js,jsx,ts,tsx,vue}"
   },
   "dependencies": {
-    "@logseq/libs": "^0.0.6",
-    "dayjs": "^1.11.2",
-    "prettier": "^2.6.2",
-    "vue": "^3.2.33"
+    "@logseq/libs": "^0.0.17",
+    "dayjs": "^1.11.13",
+    "prettier": "^3.3.3",
+    "vue": "^3.5.12"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^2.3.3",
-    "vite": "2.9.9"
+    "@vitejs/plugin-vue": "^5.1.4",
+    "vite": "5.4.10"
   },
   "logseq": {
     "id": "c6p_logseq-habit-tracker",
