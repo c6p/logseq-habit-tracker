@@ -57,7 +57,8 @@
             </span>
           </div>
           <label>
-            <input type="checkbox" :checked="countChildren" @change="(e) => { set('countChildren', e.target.checked); updateHabits(); } " />
+            <input type="checkbox" :checked="countChildren"
+              @change="(e) => { set('countChildren', e.target.checked); updateHabits(); }" />
             Count children
           </label>
           <label>
@@ -246,7 +247,13 @@ export default {
     },
   },
   async mounted() {
+    window.addEventListener("keydown", this.onKeydown);
     const appUserConfig = await logseq.App.getUserConfigs();
+    logseq.App.registerCommandPalette({
+      key: "c6p-habit-tracker",
+      keybinding: { binding: 'mod+shift+h' },
+      label: "Toggle Habit Tracker plugin UI"
+    }, () => { logseq.toggleMainUI() })
     this.setTheme({ mode: appUserConfig.preferredThemeMode });
     logseq.App.onThemeModeChanged(this.setTheme);
 
@@ -310,6 +317,13 @@ export default {
       if (!inner) {
         this.hideMainUI();
         this.gear = false;
+      }
+    },
+    onKeydown(event) {
+      if (event.key === "Escape") {
+        event.stopPropagation();
+        event.preventDefault();
+        logseq.hideMainUI()
       }
     },
     async openJournal(i) {
@@ -393,7 +407,7 @@ export default {
         if (!match) continue;
         let { habit, count, int } = match.groups;
         habit = habit.replace(reText, "").trim();
-        if (countChildren) { 
+        if (countChildren) {
           count = h[1]
         } else {
           count =
