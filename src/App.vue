@@ -57,6 +57,10 @@
             </span>
           </div>
           <label>
+            <input type="checkbox" :checked="countChildren" @change="(e) => { set('countChildren', e.target.checked); updateHabits(); } " />
+            Count children
+          </label>
+          <label>
             <input type="checkbox" :checked="hideStreak" @change="(e) => set('hideStreak', e.target.checked)" />
             Hide streak
           </label>
@@ -202,6 +206,7 @@ export default {
       ignorePattern: "",
       dateFormat: "",
       dateWidth: "",
+      countChildren: false,
       hideStreak: false,
       habits: [],
       dates: [],
@@ -254,6 +259,7 @@ export default {
           "ignorePattern",
           "dateFormat",
           "dateWidth",
+          "countChildren",
           "hideStreak",
           "colors",
         ].map((key) => [key, logseq.settings[key]])
@@ -333,12 +339,21 @@ export default {
       const habitMarker = escapeBackslashes(habitText);
       const reText = new RegExp(habitText);
       const ignorePattern = this.ignorePattern || this.defaults.ignorePattern;
+      const countChildren = this.countChildren || this.defaults.countChildren;
       const query =
         `:where
          [?b :block/page ?page]
          [?page :block/journal?]
          [?page :block/journal-day ?d]
          [(re-pattern "(?s) *?${habitMarker} *?\\n?(:PROPERTIES:.*?:END:\\n)?") ?pre]
+         (or-join [?b ?data-point ?child-count]
+          (and
+            [?child :block/parent ?b]
+            [(identity ?child) ?data-point]
+            [(ground 1) ?child-count])
+          (and
+            [(identity ?b) ?data-point]
+            [(ground 0) ?child-count]) )
          (or-join [?b ?pre]
           (and [?b :block/parent ?p]
                [?p :block/content ?pc]
@@ -364,7 +379,7 @@ export default {
       }
       this.minDay = toDayjs(start[0]);
       const habits = await logseq.DB.datascriptQuery(
-        `[:find (pull ?b [:block/content {:block/page [:block/journal-day]}]) ${query} ]`
+        `[:find (pull ?b [:block/content {:block/page [:block/journal-day]}]) (sum ?child-count) :with ?data-point ${query} ]`
       );
       this.minDayToCheck = Object.values(habitSettings(s)).reduce((p, h) => {
         if (!h?.period) return this.minDay;
@@ -378,12 +393,16 @@ export default {
         if (!match) continue;
         let { habit, count, int } = match.groups;
         habit = habit.replace(reText, "").trim();
-        count =
-          typeof count !== "undefined"
-            ? count.split(",").length
-            : typeof int !== "undefined"
-              ? parseInt(int)
-              : 1;
+        if (countChildren) { 
+          count = h[1]
+        } else {
+          count =
+            typeof count !== "undefined"
+              ? count.split(",").length
+              : typeof int !== "undefined"
+                ? parseInt(int)
+                : 1;
+        }
         const t = habitSettings(s)[habit];
         H[habit] = H[habit] || {
           habit,
