@@ -387,6 +387,7 @@ export default {
       const start = await logseq.DB.datascriptQuery(
         `[:find (min ?d) ${query}]`
       );
+      this.maxDay = dayjs().startOf("day");
       if (!start || start.length === 0) {
         this.minDay = minDate;
         return H;
