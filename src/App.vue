@@ -15,7 +15,11 @@
               updateHabits();
               toLast();
             }
-              " /></label>
+            " /></label>
+          <label><u title="Comma separated day numbers (0=Sun,...,6=Sat)&#10;Just , (comma) for none">Weekends</u>:
+            <input type="text" :placeholder="defaults.weekendDays" :value="weekendDays"
+              @change="(e) => set('weekendDays', e.target.value)" />
+          </label>
           <label>Date
             <a href="https://day.js.org/docs/en/display/format" target="_blank"
               title="'\n' adds a new line. View syntax ->">format</a>:
@@ -35,13 +39,13 @@
               set('habitPattern', e.target.value);
               updateHabits();
             }
-              " /></label>
+            " /></label>
           <label>Ignore pattern:
             <input class="m" type="text" :placeholder="defaults.ignorePattern" :value="ignorePattern" @change="(e) => {
               set('ignorePattern', e.target.value);
               updateHabits();
             }
-              " /></label>
+            " /></label>
         </div>
         <div>
           <div id="color-groups">
@@ -85,7 +89,7 @@
           </th>
           <th v-for="(d, i) in dates" :key="d" :style="{ width: dateWidth || defaults.dateWidth }" :class="[
             'track',
-            ['0', '6'].includes(d.format('d')) ? 'weekend' : '',
+            (weekendDays || defaults.weekendDays).includes(d.format('d')) ? 'weekend' : '',
           ]" @click="openJournal(i)">
             {{
               d.format(
@@ -122,7 +126,7 @@
               setHabitProp(h, 'period', e.target.value);
               updateHabits();
             }
-              " />
+            " />
           </td>
           <td class="habit">{{ h.habit }}</td>
           <td v-for="([t, s], i) in track[idx]" :key="i" :class="['track', s]" @click="openJournal(i)">
@@ -201,12 +205,14 @@ export default {
         ignorePattern: String.raw`TODO (.|\n)*`,
         dateFormat: String.raw`D.M\ndd`,
         dateWidth: "3em",
+        weekendDays: "0,6",
       },
       habitText: "",
       habitPattern: "",
       ignorePattern: "",
       dateFormat: "",
       dateWidth: "",
+      weekendDays: "",
       countChildren: false,
       hideStreak: false,
       habits: [],
@@ -269,6 +275,7 @@ export default {
           "countChildren",
           "hideStreak",
           "colors",
+          "weekendDays",
         ].map((key) => [key, logseq.settings[key]])
       )
     );
