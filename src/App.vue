@@ -204,6 +204,7 @@ export default {
         dateFormat: String.raw`D.M\ndd`,
         dateWidth: "3em",
         weekendDays: "0,6",
+        countChildren: false,
       },
       habitText: "",
       habitPattern: "",
@@ -397,7 +398,7 @@ export default {
         this.minDay = minDate;
         return H;
       }
-      this.minDay = toDayjs(start[0]);
+      this.minDay = toDayjs(start[0][0]);
       const habits = await logseq.DB.datascriptQuery(
         `[:find (pull ?b [:block/content {:block/page [:block/journal-day]}]) (sum ?child-count) :with ?data-point ${query} ]`
       );
@@ -423,7 +424,7 @@ export default {
                 ? parseInt(int)
                 : 1;
         }
-        const t = habitSettings(s)[habit];
+        const t = habitSettings(s)[habit] || {};
         H[habit] = H[habit] || {
           habit,
           track: Array(dayRange).fill(0),
