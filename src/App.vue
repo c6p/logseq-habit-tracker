@@ -74,7 +74,6 @@
       <table>
         <tr>
           <th v-show="gear">Color<br />Group</th>
-          <th v-show="gear">Order</th>
           <th v-show="gear">Hidden</th>
           <th v-show="gear || !hideStreak" class="streak">
             Longest<br />Streak
@@ -98,6 +97,7 @@
             }}
           </th>
         </tr>
+        <draggable :list="habits" tag="tbody" item-key="habit" @change="updateOrder">
         <tr v-show="gear || !h.hidden" v-for="(h, idx) in habits" :key="h" :style="{ color: colors[h.color] }">
           <td v-show="gear">
             <select class="color" :value="h.color" @change="(e) => setHabitProp(h, 'color', e.target.value)">
@@ -106,10 +106,6 @@
                 {{ i }}
               </option>
             </select>
-          </td>
-          <td v-show="gear">
-            <button class="up" @click="move(idx, -1)">&lt;</button>
-            <button class="down" @click="move(idx, 1)">&lt;</button>
           </td>
           <td v-show="gear" class="hidden">
             <input type="checkbox" :checked="h.hidden" @change="(e) => setHabitProp(h, 'hidden', e.target.checked)" />
@@ -133,12 +129,14 @@
             {{ t > 0 ? t : "" }}
           </td>
         </tr>
+        </draggable>
       </table>
     </div>
   </div>
 </template>
 
 <script>
+import { VueDraggableNext } from 'vue-draggable-next'
 import dayjs from "dayjs";
 import advancedFormat from "dayjs/plugin/advancedFormat";
 import minMax from "dayjs/plugin/minMax";
@@ -193,7 +191,7 @@ const [SUCCESS, FAILURE] = ["success", "failure"];
 
 export default {
   name: "App",
-  components: {},
+  components: { draggable: VueDraggableNext },
   data() {
     return {
       visible: false,
@@ -465,15 +463,11 @@ export default {
       await logseq.updateSettings({ colors: null });
       await logseq.updateSettings({ colors: Array.from(this.colors) });
     },
-    async move(from, delta) {
-      const to = from + delta;
-      if (to < 0) return;
-      if (to > this.habits.length - 1) return;
-      const tmp = this.habits[from];
-      this.habits[from] = this.habits[to];
-      this.habits[to] = tmp;
-      await this.setHabitProp(this.habits[from], "order", from);
-      await this.setHabitProp(this.habits[to], "order", to);
+    async updateOrder({ moved }) {
+      if (!moved) return;
+      for (const [i, h] of this.habits.entries()) {
+        await this.setHabitProp(h, "order", i);
+      }
     },
     prev() {
       this.startDay = dayjs.min(
