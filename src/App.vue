@@ -300,7 +300,7 @@ export default {
       // read theme colors
       const background = mode === "dark" ? "#433f38" : "rgb(255 255 255 / 90%)";
       const color = mode === "dark" ? "#f8f8f8" : "rgb(55, 60, 63)";
-      const input = mode === "dark" ? "rgb(47, 52, 55)" : "#fff";
+      const input = mode === "dark" ? "rgb(47, 52, 55)" : "#eee";
       // try {
       //  const s = getComputedStyle(window.parent.document.documentElement);
       //  background = s.getPropertyValue('--ls-primary-background-color');
@@ -311,7 +311,7 @@ export default {
         "--background": background,
         "--color": color,
         "--input": input,
-        "--shadow": mode === "dark" ? "black" : "gray",
+        "--shadow": mode === "dark" ? "darkgray" : "gray",
         "--red": mode === "dark" ? "#500" : "#ffcccb",
         "--green": mode === "dark" ? "#050" : "#d7ffd9",
       });

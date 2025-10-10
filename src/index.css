@@ -28,7 +28,7 @@ html, body {
 }
 a { color: var(--color); }
 #settings div { display: flex; justify-content: space-between; margin-bottom: .5em; padding: 0 1em; }
-input[type=text] { background: var(--input); color: var(--color); width: 5em; text-align: center; }
+input[type=text] { background: var(--input); border: 1px solid var(--shadow);color: var(--color); width: 5em; text-align: center; }
 input.s { width: 10em }
 input.m { width: 20em }
 input.l { width: 40em }
