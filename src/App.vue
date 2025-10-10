@@ -142,6 +142,8 @@ import advancedFormat from "dayjs/plugin/advancedFormat";
 import minMax from "dayjs/plugin/minMax";
 dayjs.extend(advancedFormat).extend(minMax);
 
+const COLORS = ["#4269d0", "#efb118", "#ff725c", "#6cc5b0", "#3ca951", "#ff8ab7", "#a463f2", "#97bbf5", "#9c6b4e", "#9498a0"];
+
 function toYMD(fromDayjs) {
   return parseInt(fromDayjs.format("YYYYMMDD"));
 }
@@ -443,7 +445,7 @@ export default {
       return H;
     },
     async addColor() {
-      this.colors.push("#cccccc");
+      this.colors.push(COLORS[this.colors.length % COLORS.length]);
       await this.setColors();
     },
     async deleteColor(i) {
