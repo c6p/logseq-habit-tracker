@@ -447,12 +447,16 @@ export default {
       await this.setColors();
     },
     async deleteColor(i) {
-      this.habits.map(async (h) => {
-        if (h.color > i) await this.setHabitProp(h, "color", --h.color);
-        else if (h.color === i) {
-          await this.setHabitProp(h, "color", (h.color = undefined));
+      for (const h of this.habits) {
+        const color = Number(h.color);
+        if (color > i) {
+          h.color = color - 1;
+          await this.setHabitProp(h, "color", h.color);
+        } else if (color === i) {
+          h.color = undefined;
+          await this.setHabitProp(h, "color", h.color);
         }
-      });
+      }
       this.colors.splice(i, 1);
       await this.setColors();
     },
